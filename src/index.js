@@ -1131,8 +1131,12 @@ export default class Gantt {
             x_on_start = e.offsetX || e.layerX;
 
             parent_bar_id = bar_wrapper.getAttribute('data-id');
+            const parent_bar = this.get_bar(parent_bar_id);
+            const dependencies_type = parent_bar.task.dependencies_type || this.options.dependencies_type;
+
             let ids;
-            if (this.options.move_dependencies) {
+            // Only move dependencies during drag if dependencies_type is 'fixed' and move_dependencies is true
+            if (this.options.move_dependencies && dependencies_type === 'fixed') {
                 ids = [
                     parent_bar_id,
                     ...this.get_all_dependent_tasks(parent_bar_id),
@@ -1344,6 +1348,13 @@ export default class Gantt {
                 bar.compute_progress();
                 bar.set_action_completed();
             });
+
+            // Update dependent tasks based on dependencies_type
+            // Only update for the parent bar that was actually moved
+            const parent_bar = this.get_bar(parent_bar_id);
+            if (parent_bar && parent_bar.$bar.finaldx) {
+                this.update_dependent_tasks_by_type(parent_bar);
+            }
         });
 
         this.bind_bar_progress();
@@ -1447,6 +1458,99 @@ export default class Gantt {
         }
 
         return out.filter(Boolean);
+    }
+
+    update_dependent_tasks_by_type(parent_bar) {
+        const dependencies_type = parent_bar.task.dependencies_type || this.options.dependencies_type;
+
+        // Skip if using fixed dependency type (current behavior)
+        if (dependencies_type === 'fixed') return;
+
+        // Get all tasks that depend on this task
+        const dependent_task_ids = this.dependency_map[parent_bar.task.id] || [];
+
+        dependent_task_ids.forEach(dependent_id => {
+            const dependent_bar = this.get_bar(dependent_id);
+            if (!dependent_bar) return;
+
+            const dependent_task = dependent_bar.task;
+            const dep_type = dependent_task.dependencies_type || this.options.dependencies_type;
+
+            // Calculate new dates based on dependency type
+            let new_start, new_end;
+            const task_duration = date_utils.diff(dependent_task._end, dependent_task._start, 'hour');
+            let should_update = false;
+
+            switch(dep_type) {
+                case 'finish-to-start':
+                    // Dependent task starts when parent task finishes
+                    // Only update if parent ends after dependent currently starts
+                    if (parent_bar.task._end > dependent_task._start) {
+                        new_start = new Date(parent_bar.task._end);
+                        new_end = date_utils.add(new_start, task_duration, 'hour');
+                        should_update = true;
+                    }
+                    break;
+
+                case 'start-to-start':
+                    // Dependent task starts when parent task starts
+                    // Only update if parent starts after dependent currently starts
+                    if (parent_bar.task._start > dependent_task._start) {
+                        new_start = new Date(parent_bar.task._start);
+                        new_end = date_utils.add(new_start, task_duration, 'hour');
+                        should_update = true;
+                    }
+                    break;
+
+                case 'finish-to-finish':
+                    // Dependent task finishes when parent task finishes
+                    // Only update if parent ends after dependent currently ends
+                    if (parent_bar.task._end > dependent_task._end) {
+                        new_end = new Date(parent_bar.task._end);
+                        new_start = date_utils.add(new_end, -task_duration, 'hour');
+                        should_update = true;
+                    }
+                    break;
+
+                case 'start-to-finish':
+                    // Dependent task finishes when parent task starts
+                    // Only update if parent starts after dependent currently ends
+                    if (parent_bar.task._start > dependent_task._end) {
+                        new_end = new Date(parent_bar.task._start);
+                        new_start = date_utils.add(new_end, -task_duration, 'hour');
+                        should_update = true;
+                    }
+                    break;
+
+                default:
+                    return;
+            }
+
+            // Only update if constraint requires it
+            if (!should_update) return;
+
+            // Update the dependent task dates
+            dependent_task._start = new_start;
+            dependent_task._end = new_end;
+
+            // Refresh the dependent bar
+            dependent_bar.compute_x();
+            dependent_bar.compute_duration();
+            dependent_bar.update_bar_position({
+                x: dependent_bar.x,
+                width: dependent_bar.width
+            });
+
+            // Trigger date_change event for the dependent task
+            this.trigger_event('date_change', [
+                dependent_task,
+                new_start,
+                date_utils.add(new_end, -1, 'second'),
+            ]);
+
+            // Recursively update dependents of this task
+            this.update_dependent_tasks_by_type(dependent_bar);
+        });
     }
 
     get_snap_position(dx, ox) {

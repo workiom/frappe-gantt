@@ -174,6 +174,65 @@
                 </div>
                 <div class="chart col-md-9" id="ignore"></div>
             </div>
+
+            <div class="row my-5">
+                <div class="chart col-md-9" id="dependencies"></div>
+                <div class="col-md-3 px-5 py-1">
+                    <h3 class="text-center">Smart Dependencies</h3>
+                    <p>
+                        Control how dependent tasks behave. Try dragging the parent task!
+                    </p>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-type"
+                            id="dep-fixed"
+                            value="fixed"
+                        />
+                        <label class="form-check-label" for="dep-fixed">
+                            Fixed (move together)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-type"
+                            id="dep-fs"
+                            value="finish-to-start"
+                            checked
+                        />
+                        <label class="form-check-label" for="dep-fs">
+                            Finish-to-Start
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-type"
+                            id="dep-ss"
+                            value="start-to-start"
+                        />
+                        <label class="form-check-label" for="dep-ss">
+                            Start-to-Start
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-type"
+                            id="dep-ff"
+                            value="finish-to-finish"
+                        />
+                        <label class="form-check-label" for="dep-ff">
+                            Finish-to-Finish
+                        </label>
+                    </div>
+                </div>
+            </div>
             <div class="row my-4">
                 <div class="col-md-9 chart" id="styling"></div>
                 <div class="col-md-3 px-4">
@@ -562,6 +621,12 @@
                 scroll_to: daysSince(-10),
             });
 
+            const dependencies = new Gantt('#dependencies', tasksDependencies, {
+                dependencies_type: 'finish-to-start',
+                holidays: null,
+                scroll_to: daysSince(-5),
+            });
+
             const styling = new Gantt('#styling', tasksMany, {
                 holidays: null,
                 scroll_to: daysSince(-10),
@@ -573,6 +638,18 @@
                 snap_at: '1d',
                 auto_move_label: false,
                 scroll_to: 'today',
+            });
+
+            // Handle dependency type radio buttons
+            document.querySelectorAll('input[name="dep-type"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    dependencies.update_options({
+                        dependencies_type: e.target.value,
+                        scroll_to: null
+                    });
+                    const scroll = dependencies.$container.scrollLeft;
+                    dependencies.$container.scrollLeft = scroll;
+                });
             });
 
             const UPDATES = [

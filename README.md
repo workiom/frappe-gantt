@@ -85,6 +85,7 @@ Frappe Gantt offers a wide range of options to customize your chart.
 | `container_height`       | Height of the container.                                      | `auto` - dynamic container height to fit all tasks - _or_ any positive integer (for pixels).                                                                                  | `auto`                                              |
 | `column_width`           | Width of each column in the timeline.                         | Any positive integer.                                                                                                                                                         | 45                                                  |
 | `date_format`            | Format for displaying dates.                                  | Any valid JS date format string.                                                                                                                                              | `YYYY-MM-DD`                                        |
+| `dependencies_type`      | How dependent tasks behave when parent tasks move.            | `fixed`, `finish-to-start`, `start-to-start`, `finish-to-finish`, `start-to-finish`                                                                                           | `fixed`                                             |
 | `upper_header_height`    | Height of the upper header in the timeline (in pixels).       | Any positive integer.                                                                                                                                                         | `45`                                                |
 | `lower_header_height`    | Height of the lower header in the timeline (in pixels).       | Any positive integer.                                                                                                                                                         | `30`                                                |
 | `snap_at`                | Snap tasks at particular intervel while resizing or dragging. | Any _interval_ (see below)                                                                                                                                                    | `1d`                                                |
@@ -106,7 +107,68 @@ Frappe Gantt offers a wide range of options to customize your chart.
 | `view_mode`              | The initial view mode of the Gantt chart.                     | `Day`, `Week`, `Month`, `Year`.                                                                                                                                               | `Day`                                               |
 | `view_mode_select`       | Allows selecting the view mode from a dropdown.               | `true`, `false`                                                                                                                                                               | `false`                                             |
 
-Apart from these ones, two options - `popup` and `view_modes` (plural, not singular) - are available. They have "sub"-APIs, and thus are listed separately.
+Apart from these ones, three options - `popup`, `view_modes` (plural, not singular), and `dependencies_type` - have additional details and are listed separately below.
+
+#### Dependencies Type Configuration
+
+The `dependencies_type` option controls how dependent tasks behave when their parent tasks are moved. This can be set globally for all tasks or overridden per task.
+
+**Available Types:**
+
+- **`fixed`** (default): Maintains backward compatibility. When `move_dependencies: true`, dependent tasks move together with parent during drag.
+
+- **`finish-to-start`**: Most common in project management. The dependent task can only start after the parent finishes.
+  - Constraint: Dependent start date ≥ Parent end date
+  - Auto-update: If parent ends after dependent starts, dependent moves forward
+  - Example: Development can only start after Design finishes
+
+- **`start-to-start`**: The dependent task can only start after the parent starts.
+  - Constraint: Dependent start date ≥ Parent start date
+  - Auto-update: If parent starts after dependent, dependent moves forward
+  - Example: Testing can start after Development starts (parallel work)
+
+- **`finish-to-finish`**: The dependent task can only finish after the parent finishes.
+  - Constraint: Dependent end date ≥ Parent end date
+  - Auto-update: If parent ends after dependent, dependent extends
+  - Example: Documentation must finish after Development finishes
+
+- **`start-to-finish`**: The dependent task can only finish after the parent starts (rare).
+  - Constraint: Dependent end date ≥ Parent start date
+  - Auto-update: If parent starts after dependent ends, dependent extends
+  - Example: Legacy system runs until new system starts
+
+**Usage:**
+
+```js
+// Global configuration
+let gantt = new Gantt("#gantt", tasks, {
+    dependencies_type: 'finish-to-start'
+});
+
+// Per-task override
+let tasks = [
+    {
+        id: 'design',
+        name: 'Design',
+        start: '2023-01-01',
+        end: '2023-01-05'
+    },
+    {
+        id: 'dev',
+        name: 'Development',
+        start: '2023-01-05',
+        end: '2023-01-15',
+        dependencies: 'design',
+        dependencies_type: 'finish-to-start' // Overrides global setting
+    }
+];
+```
+
+**Behavior:**
+- When a parent task is moved, dependents automatically adjust if constraints would be violated
+- Users cannot drag dependent tasks to positions that violate constraints
+- Updates cascade through dependency chains (A → B → C)
+- All dependency types respect ignored dates/weekends
 
 #### View Mode Configuration
 

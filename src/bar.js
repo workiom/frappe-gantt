@@ -423,13 +423,10 @@ export default class Bar {
         const bar = this.$bar;
 
         if (x) {
-            const xs = this.task.dependencies.map((dep) => {
-                return this.gantt.get_bar(dep).$bar.getX();
-            });
-            const valid_x = xs.reduce((prev, curr) => {
-                return prev && x >= curr;
-            }, true);
-            if (!valid_x) return;
+            // Validate against dependency constraints
+            if (!this.validate_dependency_constraints(x, width)) {
+                return;
+            }
             this.update_attr(bar, 'x', x);
             this.x = x;
             this.$date_highlight.style.left = x + 'px';
@@ -450,6 +447,76 @@ export default class Bar {
 
         this.update_progressbar_position();
         this.update_arrow_position();
+    }
+
+    validate_dependency_constraints(new_x, new_width = null) {
+        const dependencies_type = this.task.dependencies_type || this.gantt.options.dependencies_type;
+
+        // For fixed dependencies, use old validation logic
+        if (dependencies_type === 'fixed') {
+            const xs = this.task.dependencies.map((dep) => {
+                return this.gantt.get_bar(dep).$bar.getX();
+            });
+            return xs.reduce((prev, curr) => {
+                return prev && new_x >= curr;
+            }, true);
+        }
+
+        // Calculate what the new dates would be
+        const new_start_x = new_x / this.gantt.config.column_width;
+        const new_start = date_utils.add(
+            this.gantt.gantt_start,
+            new_start_x * this.gantt.config.step,
+            this.gantt.config.unit
+        );
+
+        const bar_width = new_width || this.$bar.getWidth();
+        const width_in_units = bar_width / this.gantt.config.column_width;
+        const new_end = date_utils.add(
+            new_start,
+            width_in_units * this.gantt.config.step,
+            this.gantt.config.unit
+        );
+
+        // Check constraints for each parent dependency
+        for (const dep_id of this.task.dependencies) {
+            const parent_bar = this.gantt.get_bar(dep_id);
+            if (!parent_bar) continue;
+
+            const parent_task = parent_bar.task;
+
+            switch(dependencies_type) {
+                case 'finish-to-start':
+                    // This task cannot start before parent finishes
+                    if (new_start < parent_task._end) {
+                        return false;
+                    }
+                    break;
+
+                case 'start-to-start':
+                    // This task cannot start before parent starts
+                    if (new_start < parent_task._start) {
+                        return false;
+                    }
+                    break;
+
+                case 'finish-to-finish':
+                    // This task cannot finish before parent finishes
+                    if (new_end < parent_task._end) {
+                        return false;
+                    }
+                    break;
+
+                case 'start-to-finish':
+                    // This task cannot finish before parent starts
+                    if (new_end < parent_task._start) {
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        return true;
     }
 
     update_label_position_on_horizontal_scroll({ x, sx }) {
