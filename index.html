@@ -233,6 +233,27 @@
                     </div>
                 </div>
             </div>
+            <div class="row my-5">
+                <div class="col-md-3 px-5 py-1">
+                    <h3 class="text-center">Critical Path</h3>
+                    <p>
+                        Highlight the critical tasks in your project with red arrows.
+                    </p>
+                    <div class="form-check form-switch">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="toggle-critical-path"
+                            checked
+                        />
+                        <label class="form-check-label" for="toggle-critical-path">
+                            Show Critical Path
+                        </label>
+                    </div>
+                </div>
+                <div class="chart col-md-9" id="critical-path"></div>
+            </div>
             <div class="row my-4">
                 <div class="col-md-9 chart" id="styling"></div>
                 <div class="col-md-3 px-4">
@@ -627,6 +648,54 @@
                 scroll_to: daysSince(-5),
             });
 
+            const tasksCriticalPath = [
+                {
+                    start: daysSince(-5),
+                    end: daysSince(-1),
+                    name: 'Design Phase',
+                    id: 'Task 0',
+                    progress: random(),
+                },
+                {
+                    start: daysSince(-1),
+                    duration: '8d',
+                    name: 'Development',
+                    id: 'Task 1',
+                    progress: random(),
+                    dependencies: 'Task 0',
+                },
+                {
+                    start: daysSince(1),
+                    duration: '3d',
+                    name: 'Documentation',
+                    id: 'Task 2',
+                    progress: random(),
+                    dependencies: 'Task 0',
+                },
+                {
+                    start: daysSince(8),
+                    duration: '4d',
+                    name: 'Testing',
+                    id: 'Task 3',
+                    progress: random(),
+                    dependencies: 'Task 1',
+                },
+                {
+                    start: daysSince(13),
+                    duration: '2d',
+                    name: 'Deployment',
+                    id: 'Task 4',
+                    progress: random(),
+                    dependencies: 'Task 3',
+                },
+            ];
+
+            const criticalPath = new Gantt('#critical-path', tasksCriticalPath, {
+                critical_path: true,
+                holidays: null,
+                scroll_to: daysSince(-5),
+            });
+
             const styling = new Gantt('#styling', tasksMany, {
                 holidays: null,
                 scroll_to: daysSince(-10),
@@ -696,6 +765,12 @@
                     ignore,
                     {
                         'ignore-weekends': ['ignore', ['weekend'], []],
+                    },
+                ],
+                [
+                    criticalPath,
+                    {
+                        'toggle-critical-path': 'critical_path',
                     },
                 ],
                 [

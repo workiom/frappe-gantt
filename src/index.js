@@ -879,6 +879,12 @@ export default class Gantt {
 
     make_arrows() {
         this.arrows = [];
+
+        // Calculate critical path if enabled
+        if (this.options.critical_path) {
+            this.calculate_critical_path();
+        }
+
         for (let task of this.tasks) {
             let arrows = [];
             arrows = task.dependencies
@@ -896,6 +902,95 @@ export default class Gantt {
                 .filter(Boolean); // filter falsy values
             this.arrows = this.arrows.concat(arrows);
         }
+    }
+
+    calculate_critical_path() {
+        // Reset critical path flags
+        this.tasks.forEach(task => task._is_critical = false);
+
+        // Calculate Early Start (ES) and Early Finish (EF) - Forward pass
+        const task_es_ef = {};
+        this.tasks.forEach(task => {
+            task_es_ef[task.id] = { es: 0, ef: 0, ls: 0, lf: 0 };
+        });
+
+        // Forward pass: Calculate ES and EF
+        const calculateES = (task) => {
+            if (task_es_ef[task.id].ef > 0) return task_es_ef[task.id];
+
+            let maxEF = 0;
+            if (task.dependencies && task.dependencies.length > 0) {
+                task.dependencies.forEach(dep_id => {
+                    const dep_task = this.get_task(dep_id);
+                    if (dep_task) {
+                        const dep_values = calculateES(dep_task);
+                        maxEF = Math.max(maxEF, dep_values.ef);
+                    }
+                });
+            }
+
+            task_es_ef[task.id].es = maxEF;
+            const duration = date_utils.diff(task._end, task._start, 'hour') / 24; // in days
+            task_es_ef[task.id].ef = maxEF + duration;
+
+            return task_es_ef[task.id];
+        };
+
+        // Calculate ES/EF for all tasks
+        this.tasks.forEach(task => calculateES(task));
+
+        // Find project completion time
+        const projectDuration = Math.max(...Object.values(task_es_ef).map(v => v.ef));
+
+        // Backward pass: Calculate LS and LF
+        const calculateLS = (task) => {
+            if (task_es_ef[task.id].ls > 0 || task_es_ef[task.id].lf > 0) {
+                return task_es_ef[task.id];
+            }
+
+            // Find tasks that depend on this task
+            const dependents = this.tasks.filter(t =>
+                t.dependencies && t.dependencies.includes(task.id)
+            );
+
+            let minLS = projectDuration;
+            if (dependents.length > 0) {
+                dependents.forEach(dep_task => {
+                    const dep_values = calculateLS(dep_task);
+                    minLS = Math.min(minLS, dep_values.ls);
+                });
+            }
+
+            const duration = date_utils.diff(task._end, task._start, 'hour') / 24; // in days
+            task_es_ef[task.id].lf = minLS;
+            task_es_ef[task.id].ls = minLS - duration;
+
+            return task_es_ef[task.id];
+        };
+
+        // Calculate LS/LF for all tasks
+        this.tasks.forEach(task => calculateLS(task));
+
+        // Identify critical path: tasks where ES = LS (or slack = 0)
+        this.tasks.forEach(task => {
+            const values = task_es_ef[task.id];
+            const slack = values.ls - values.es;
+            task._is_critical = Math.abs(slack) < 0.01; // Use small epsilon for float comparison
+        });
+    }
+
+    update_arrow_critical_path() {
+        // Update arrow styling based on new critical path calculation
+        this.arrows.forEach(arrow => {
+            const is_critical = arrow.from_task.task._is_critical === true &&
+                              arrow.to_task.task._is_critical === true;
+
+            if (is_critical) {
+                arrow.element.classList.add('arrow-critical');
+            } else {
+                arrow.element.classList.remove('arrow-critical');
+            }
+        });
     }
 
     map_arrows_on_bars() {
@@ -1354,6 +1449,12 @@ export default class Gantt {
             const parent_bar = this.get_bar(parent_bar_id);
             if (parent_bar && parent_bar.$bar.finaldx) {
                 this.update_dependent_tasks_by_type(parent_bar);
+            }
+
+            // Recalculate critical path if enabled and any bar was moved
+            if (this.options.critical_path && bars.some(bar => bar.$bar.finaldx)) {
+                this.calculate_critical_path();
+                this.update_arrow_critical_path();
             }
         });
 

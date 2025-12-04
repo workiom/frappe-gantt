@@ -5,9 +5,18 @@ export default class Arrow {
         this.gantt = gantt;
         this.from_task = from_task;
         this.to_task = to_task;
+        this.is_critical = this.check_critical_path();
 
         this.calculate_path();
         this.draw();
+    }
+
+    check_critical_path() {
+        if (!this.gantt.options.critical_path) return false;
+
+        // Check if both from_task and to_task are on the critical path
+        return this.from_task.task._is_critical === true &&
+               this.to_task.task._is_critical === true;
     }
 
     calculate_path() {
@@ -93,6 +102,7 @@ export default class Arrow {
             d: this.path,
             'data-from': this.from_task.task.id,
             'data-to': this.to_task.task.id,
+            class: this.is_critical ? 'arrow-critical' : '',
         });
     }
 

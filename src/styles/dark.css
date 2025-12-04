@@ -8,6 +8,7 @@
     --g-text-light-dark: #ececec;
     --g-text-color-dark: #f7f7f7;
     --g-progress-color: #8a8aff;
+    --g-arrow-critical-color-dark: #ff9999;
 }
 
 .dark > .gantt-container .gantt {
@@ -25,6 +26,10 @@
 
     & .arrow {
         stroke: var(--g-text-muted-dark);
+    }
+
+    & .arrow-critical {
+        stroke: var(--g-arrow-critical-color-dark);
     }
 
     & .bar {

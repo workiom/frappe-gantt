@@ -267,6 +267,10 @@
         stroke-width: 1.5;
     }
 
+    & .arrow-critical {
+        stroke: var(--g-arrow-critical-color);
+    }
+
     & .bar-wrapper .bar {
         fill: var(--g-bar-color);
         stroke: var(--g-bar-border);
