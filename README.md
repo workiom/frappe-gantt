@@ -208,6 +208,35 @@ The function receives one object as an argument, containing:
 -   `set_title`, `set_subtitle`, `set_details` (functions) - take in the HTML of the relevant section
 -   `add_action` (function) - accepts two parameters, `html` and `func` - respectively determining the HTML of the action and the callback when the action is pressed.
 
+### Events
+
+Frappe Gantt provides event callbacks to respond to user interactions:
+
+| **Event**              | **Description**                                                              | **Parameters**                                             |
+| ---------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `on_click`             | Triggered when a task bar is clicked.                                        | `task` - the task object                                   |
+| `on_double_click`      | Triggered when a task bar is double-clicked.                                 | `task` - the task object                                   |
+| `on_date_change`       | Triggered while dragging a task (called multiple times during drag).         | `task`, `start` (Date), `end` (Date)                       |
+| `on_after_date_change` | Triggered after dropping a task, for parent and all affected children.       | `task`, `start` (Date), `end` (Date)                       |
+| `on_progress_change`   | Triggered when task progress is changed.                                     | `task`, `progress` (number)                                |
+| `on_view_change`       | Triggered when the view mode changes.                                        | `mode` (string)                                            |
+| `on_hover`             | Triggered when hovering over a task.                                         | `task`, `screenX`, `screenY`, `event`                      |
+
+**Example:**
+
+```js
+let gantt = new Gantt("#gantt", tasks, {
+    on_date_change: (task, start, end) => {
+        console.log('Task is being dragged:', task.name);
+    },
+    on_after_date_change: (task, start, end) => {
+        console.log('Task dropped:', task.name, 'New dates:', start, end);
+        // Perfect place to save changes to your backend
+        // This event fires for the dragged task and all dependents that moved
+    }
+});
+```
+
 ### API
 
 Frappe Gantt exposes a few helpful methods for you to interact with the chart:

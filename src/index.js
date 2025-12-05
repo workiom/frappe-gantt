@@ -1436,25 +1436,42 @@ export default class Gantt {
 
         $.on(this.$svg, 'mouseup', (e) => {
             this.bar_being_dragged = null;
+            const tasks_changed = [];
+
             bars.forEach((bar) => {
                 const $bar = bar.$bar;
                 if (!$bar.finaldx) return;
                 bar.date_changed();
                 bar.compute_progress();
                 bar.set_action_completed();
+                // Track tasks that changed
+                tasks_changed.push({
+                    task: bar.task,
+                    start: bar.task._start,
+                    end: date_utils.add(bar.task._end, -1, 'second')
+                });
             });
 
             // Update dependent tasks based on dependencies_type
             // Only update for the parent bar that was actually moved
             const parent_bar = this.get_bar(parent_bar_id);
             if (parent_bar && parent_bar.$bar.finaldx) {
-                this.update_dependent_tasks_by_type(parent_bar);
+                const dependent_changes = this.update_dependent_tasks_by_type(parent_bar);
+                // Add dependent task changes to the list
+                tasks_changed.push(...dependent_changes);
             }
 
             // Recalculate critical path if enabled and any bar was moved
             if (this.options.critical_path && bars.some(bar => bar.$bar.finaldx)) {
                 this.calculate_critical_path();
                 this.update_arrow_critical_path();
+            }
+
+            // Trigger on_after_date_change for all tasks that changed
+            if (tasks_changed.length > 0) {
+                tasks_changed.forEach(({task, start, end}) => {
+                    this.trigger_event('after_date_change', [task, start, end]);
+                });
             }
         });
 
@@ -1563,9 +1580,10 @@ export default class Gantt {
 
     update_dependent_tasks_by_type(parent_bar) {
         const dependencies_type = parent_bar.task.dependencies_type || this.options.dependencies_type;
+        const changed_tasks = [];
 
         // Skip if using fixed dependency type (current behavior)
-        if (dependencies_type === 'fixed') return;
+        if (dependencies_type === 'fixed') return changed_tasks;
 
         // Get all tasks that depend on this task
         const dependent_task_ids = this.dependency_map[parent_bar.task.id] || [];
@@ -1649,9 +1667,19 @@ export default class Gantt {
                 date_utils.add(new_end, -1, 'second'),
             ]);
 
-            // Recursively update dependents of this task
-            this.update_dependent_tasks_by_type(dependent_bar);
+            // Track this changed task
+            changed_tasks.push({
+                task: dependent_task,
+                start: new_start,
+                end: date_utils.add(new_end, -1, 'second')
+            });
+
+            // Recursively update dependents of this task and collect their changes
+            const recursive_changes = this.update_dependent_tasks_by_type(dependent_bar);
+            changed_tasks.push(...recursive_changes);
         });
+
+        return changed_tasks;
     }
 
     get_snap_position(dx, ox) {

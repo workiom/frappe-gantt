@@ -522,6 +522,59 @@
                     custom_class: 'readonly',
                     progress: random(),
                 },
+                // Parent task with children
+                {
+                    start: daysSince(10),
+                    end: daysSince(12),
+                    name: 'Project Phase 1',
+                    id: 'Parent 1',
+                    progress: random(),
+                },
+                // First child
+                {
+                    start: daysSince(12),
+                    duration: '3d',
+                    name: 'Planning',
+                    id: 'Child 1.1',
+                    progress: random(),
+                    dependencies: 'Parent 1',
+                },
+                // Second child
+                {
+                    start: daysSince(13),
+                    duration: '2d',
+                    name: 'Development',
+                    id: 'Child 1.2',
+                    progress: random(),
+                    dependencies: 'Child 1.1',
+                },
+                // Third child with sub-children
+                {
+                    start: daysSince(15),
+                    duration: '3d',
+                    name: 'Testing',
+                    id: 'Child 1.3',
+                    progress: random(),
+                    dependencies: 'Child 1.2',
+                },
+                // First sub-child of third child
+                {
+                    start: daysSince(17),
+                    duration: '2d',
+                    name: 'Unit Testing',
+                    id: 'SubChild 1.3.1',
+                    progress: random(),
+                    dependencies: 'Child 1.3',
+                },
+                // Second sub-child of third child
+                {
+                    start: daysSince(16),
+                    duration: '4d',
+                    name: 'Integration Testing',
+                    id: 'SubChild 1.3.2',
+                    progress: random(),
+                    dependencies: 'Child 1.3',
+                },
             ];
             let tasksMany = [
                 {
