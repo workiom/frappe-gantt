@@ -521,6 +521,8 @@ export default class Bar {
         });
 
         $.on(this.group, 'click', () => {
+            // Don't trigger click if we just finished dragging
+            if (this.action_completed || this.gantt.bar_being_dragged) return;
             this.gantt.trigger_event('click', [this.task]);
         });
 

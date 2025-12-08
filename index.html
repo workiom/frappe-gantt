@@ -748,6 +748,9 @@
                 holidays: null,
                 scroll_to: daysSince(-5),
                 task_add_icon_position: 'before',
+                on_click: (task) => {
+                    alert('Task clicked triggered: ' + task.name);
+                },
                 on_task_add: (task) => {
                     alert('Task added triggered: ' + task.name);
                 },
