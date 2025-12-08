@@ -28,6 +28,10 @@ export default class Bar {
         this.gantt = gantt;
         this.task = task;
         this.name = this.name || '';
+        this.is_dragging = false;
+        this.is_hovering_bar = false;
+        this.is_hovering_icon = false;
+        this.add_icon_hide_timeout = null;
     }
 
     prepare_wrappers() {
@@ -105,6 +109,10 @@ export default class Bar {
 
         if (this.task.thumbnail) {
             this.draw_thumbnail();
+        }
+
+        if (this.gantt.options.task_add_icon_position) {
+            this.draw_add_task_icon();
         }
     }
 
@@ -277,6 +285,99 @@ export default class Bar {
         });
     }
 
+    draw_add_task_icon() {
+        const icon_size = 20;
+        const icon_padding = 5;
+        this.icon_size = icon_size;
+        this.icon_padding = icon_padding;
+        let icon_x;
+
+        if (this.gantt.options.task_add_icon_position === 'before') {
+            icon_x = this.x - icon_size - icon_padding;
+        } else if (this.gantt.options.task_add_icon_position === 'after') {
+            icon_x = this.x + this.$bar.getWidth() + icon_padding;
+        } else {
+            return;
+        }
+
+        const icon_y = this.y + (this.height - icon_size) / 2;
+
+        // Create icon group
+        this.$add_icon_group = createSVG('g', {
+            class: 'add-task-icon hide',
+            append_to: this.handle_group,
+        });
+
+        // Create circle background
+        this.$add_icon_circle = createSVG('circle', {
+            cx: icon_x + icon_size / 2,
+            cy: icon_y + icon_size / 2,
+            r: icon_size / 2,
+            class: 'add-task-icon-bg',
+            append_to: this.$add_icon_group,
+        });
+
+        // Create plus sign (vertical line)
+        this.$add_icon_vertical = createSVG('line', {
+            x1: icon_x + icon_size / 2,
+            y1: icon_y + 5,
+            x2: icon_x + icon_size / 2,
+            y2: icon_y + icon_size - 5,
+            class: 'add-task-icon-plus',
+            append_to: this.$add_icon_group,
+        });
+
+        // Create plus sign (horizontal line)
+        this.$add_icon_horizontal = createSVG('line', {
+            x1: icon_x + 5,
+            y1: icon_y + icon_size / 2,
+            x2: icon_x + icon_size - 5,
+            y2: icon_y + icon_size / 2,
+            class: 'add-task-icon-plus',
+            append_to: this.$add_icon_group,
+        });
+
+        // Prevent mousedown from starting drag process
+        $.on(this.$add_icon_group, 'mousedown', (e) => {
+            e.stopPropagation();
+        });
+
+        // Prevent mouseup from triggering popup
+        $.on(this.$add_icon_group, 'mouseup', (e) => {
+            e.stopPropagation();
+        });
+
+        // Add click event handler
+        $.on(this.$add_icon_group, 'click', (e) => {
+            e.stopPropagation();
+            this.gantt.trigger_event('task_add', [this.task]);
+        });
+
+        // Add hover effect
+        $.on(this.$add_icon_group, 'mouseenter', (e) => {
+            this.is_hovering_icon = true;
+            // Cancel any pending hide timeout
+            if (this.add_icon_hide_timeout) {
+                clearTimeout(this.add_icon_hide_timeout);
+                this.add_icon_hide_timeout = null;
+            }
+            this.$add_icon_group.classList.add('active');
+            // Keep icon visible when hovering over it
+            this.$add_icon_group.classList.remove('hide');
+            // Prevent event from bubbling to trigger hover events
+            e.stopPropagation();
+        });
+
+        $.on(this.$add_icon_group, 'mouseleave', () => {
+            this.is_hovering_icon = false;
+            this.$add_icon_group.classList.remove('active');
+            // Only hide if not hovering over the bar
+            if (!this.is_hovering_bar) {
+                this.$add_icon_group.classList.add('hide');
+            }
+        });
+    }
+
     draw_resize_handles() {
         if (this.invalid || this.gantt.options.readonly) return;
 
@@ -374,6 +475,19 @@ export default class Bar {
                     .querySelector(`.highlight-${task_id}`)
                     .classList.remove('hide');
             }, 200);
+
+            // Show add task icon on hover only if not dragging
+            if (this.$add_icon_group) {
+                this.is_hovering_bar = true;
+                if (this.add_icon_hide_timeout) {
+                    clearTimeout(this.add_icon_hide_timeout);
+                    this.add_icon_hide_timeout = null;
+                }
+                // Only show if not currently dragging
+                if (!this.is_dragging) {
+                    this.$add_icon_group.classList.remove('hide');
+                }
+            }
         });
         $.on(this.group, 'mouseleave', () => {
             clearTimeout(timeout);
@@ -382,6 +496,28 @@ export default class Bar {
             this.gantt.$container
                 .querySelector(`.highlight-${task_id}`)
                 .classList.add('hide');
+
+            // Hide add task icon on mouse leave with delay
+            if (this.$add_icon_group) {
+                this.is_hovering_bar = false;
+                // Clear any existing timeout
+                if (this.add_icon_hide_timeout) {
+                    clearTimeout(this.add_icon_hide_timeout);
+                }
+                // Add delay to allow mouse to reach the icon
+                this.add_icon_hide_timeout = setTimeout(() => {
+                    // Only hide if not hovering over icon
+                    if (!this.is_hovering_icon) {
+                        this.$add_icon_group.classList.add('hide');
+                    }
+                }, 200);
+            }
+        });
+
+        $.on(this.group, 'mousedown', () => {
+            // Mark as dragging and hide add icon
+            this.is_dragging = true;
+            this.hide_add_icon();
         });
 
         $.on(this.group, 'click', () => {
@@ -442,6 +578,7 @@ export default class Bar {
 
         this.update_label_position();
         this.update_handle_position();
+        this.update_add_icon_position();
         this.date_changed();
         this.compute_duration();
 
@@ -590,6 +727,12 @@ export default class Bar {
     set_action_completed() {
         this.action_completed = true;
         setTimeout(() => (this.action_completed = false), 1000);
+        // Mark dragging as complete
+        this.is_dragging = false;
+        // Show add icon if hovering
+        if (this.$add_icon_group && this.is_hovering_bar) {
+            this.$add_icon_group.classList.remove('hide');
+        }
     }
 
     compute_start_end_date() {
@@ -797,6 +940,45 @@ export default class Bar {
             .setAttribute('x', bar.getEndX());
         const handle = this.group.querySelector('.handle.progress');
         handle && handle.setAttribute('cx', this.$bar_progress.getEndX());
+    }
+
+    update_add_icon_position() {
+        if (!this.$add_icon_group) return;
+
+        const icon_size = this.icon_size;
+        const icon_padding = this.icon_padding;
+        let icon_x;
+
+        if (this.gantt.options.task_add_icon_position === 'before') {
+            icon_x = this.x - icon_size - icon_padding;
+        } else if (this.gantt.options.task_add_icon_position === 'after') {
+            icon_x = this.x + this.$bar.getWidth() + icon_padding;
+        } else {
+            return;
+        }
+
+        const icon_y = this.y + (this.height - icon_size) / 2;
+
+        // Update circle position
+        this.$add_icon_circle.setAttribute('cx', icon_x + icon_size / 2);
+        this.$add_icon_circle.setAttribute('cy', icon_y + icon_size / 2);
+
+        // Update vertical line position
+        this.$add_icon_vertical.setAttribute('x1', icon_x + icon_size / 2);
+        this.$add_icon_vertical.setAttribute('y1', icon_y + 5);
+        this.$add_icon_vertical.setAttribute('x2', icon_x + icon_size / 2);
+        this.$add_icon_vertical.setAttribute('y2', icon_y + icon_size - 5);
+
+        // Update horizontal line position
+        this.$add_icon_horizontal.setAttribute('x1', icon_x + 5);
+        this.$add_icon_horizontal.setAttribute('y1', icon_y + icon_size / 2);
+        this.$add_icon_horizontal.setAttribute('x2', icon_x + icon_size - 5);
+        this.$add_icon_horizontal.setAttribute('y2', icon_y + icon_size / 2);
+    }
+
+    hide_add_icon() {
+        if (!this.$add_icon_group) return;
+        this.$add_icon_group.classList.add('hide');
     }
 
     update_arrow_position() {

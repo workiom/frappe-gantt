@@ -344,4 +344,35 @@
             }
         }
     }
+
+    & .add-task-icon {
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+
+        & .add-task-icon-bg {
+            fill: var(--g-bar-color);
+            stroke: var(--g-bar-border);
+            stroke-width: 1;
+            transition: all 0.2s ease;
+        }
+
+        & .add-task-icon-plus {
+            stroke: var(--g-text-dark);
+            stroke-width: 2;
+            stroke-linecap: round;
+            transition: stroke 0.2s ease;
+        }
+
+        &.active,
+        &:hover {
+            & .add-task-icon-bg {
+                fill: var(--g-progress-color);
+                stroke: var(--g-progress-color);
+            }
+
+            & .add-task-icon-plus {
+                stroke: var(--g-text-light);
+            }
+        }
+    }
 }

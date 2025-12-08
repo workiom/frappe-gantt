@@ -711,7 +711,7 @@
                 },
                 {
                     start: daysSince(-1),
-                    duration: '8d',
+                    duration: '4d',
                     name: 'Development',
                     id: 'Task 1',
                     progress: random(),
@@ -747,6 +747,10 @@
                 critical_path: true,
                 holidays: null,
                 scroll_to: daysSince(-5),
+                task_add_icon_position: 'before',
+                on_task_add: (task) => {
+                    alert('Task added triggered: ' + task.name);
+                },
             });
 
             const styling = new Gantt('#styling', tasksMany, {

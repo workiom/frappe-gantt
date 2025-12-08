@@ -104,7 +104,8 @@ Frappe Gantt offers a wide range of options to customize your chart.
 | `readonly`               | Disables all editing features.                                | `true`, `false`                                                                                                                                                               | `false`                                             |
 | `scroll_to`              | Determines the starting point when chart is rendered.         | `today`, `start`, `end`, or a date string.                                                                                                                                    | `today`                                             |
 | `show_expected_progress` | Shows expected progress for tasks.                            | `true`, `false`                                                                                                                                                               | `false`                                             |
-| `today_button`           | Adds a button to navigate to today’s date.                    | `true`, `false`                                                                                                                                                               | `true`                                              |
+| `task_add_icon_position` | Position of the add task icon relative to task bar.           | `null` (hidden), `'before'`, `'after'`                                                                                                                                        | `null`                                              |
+| `today_button`           | Adds a button to navigate to today's date.                    | `true`, `false`                                                                                                                                                               | `true`                                              |
 | `view_mode`              | The initial view mode of the Gantt chart.                     | `Day`, `Week`, `Month`, `Year`.                                                                                                                                               | `Day`                                               |
 | `view_mode_select`       | Allows selecting the view mode from a dropdown.               | `true`, `false`                                                                                                                                                               | `false`                                             |
 
@@ -221,6 +222,7 @@ Frappe Gantt provides event callbacks to respond to user interactions:
 | `on_progress_change`   | Triggered when task progress is changed.                                     | `task`, `progress` (number)                                |
 | `on_view_change`       | Triggered when the view mode changes.                                        | `mode` (string)                                            |
 | `on_hover`             | Triggered when hovering over a task.                                         | `task`, `screenX`, `screenY`, `event`                      |
+| `on_task_add`          | Triggered when the add task icon is clicked.                                 | `task` - the parent task object                            |
 
 **Example:**
 
@@ -233,7 +235,13 @@ let gantt = new Gantt("#gantt", tasks, {
         console.log('Task dropped:', task.name, 'New dates:', start, end);
         // Perfect place to save changes to your backend
         // This event fires for the dragged task and all dependents that moved
-    }
+    },
+    on_task_add: (task) => {
+        console.log('Add task button clicked for:', task.name);
+        // Handle adding a new task relative to this task
+        // You can use the task parameter to determine where to add the new task
+    },
+    task_add_icon_position: 'after' // Show plus icon after each task bar
 });
 ```
 

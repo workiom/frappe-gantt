@@ -153,6 +153,7 @@ const DEFAULT_OPTIONS = {
     readonly: false,
     scroll_to: 'today',
     show_expected_progress: false,
+    task_add_icon_position: null,
     today_button: true,
     view_mode: 'Day',
     view_mode_select: false,
