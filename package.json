@@ -1,6 +1,6 @@
 {
     "name": "@workiom/frappe-gantt",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "A simple, modern, interactive gantt library for the web",
     "main": "src/index.js",
     "type": "module",
