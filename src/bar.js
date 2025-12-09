@@ -232,13 +232,14 @@ export default class Bar {
             x_coord = this.x + this.image_size + 5;
         }
 
-        createSVG('text', {
+        this.$bar_label = createSVG('text', {
             x: x_coord,
             y: this.y + this.height / 2,
             innerHTML: this.task.name,
             class: 'bar-label',
             append_to: this.bar_group,
         });
+        if (this.task.color_text) this.$bar_label.style.fill = this.task.color_text;
         // labels get BBox in the next tick
         requestAnimationFrame(() => this.update_label_position());
     }
