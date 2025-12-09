@@ -758,6 +758,7 @@
             const criticalPath = new Gantt('#critical-path', tasksCriticalPath, {
                 critical_path: true,
                 holidays: null,
+                popup_on: 'hover',
                 scroll_to: daysSince(-5),
                 task_add_icon_position: 'before',
                 on_click: (task) => {

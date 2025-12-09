@@ -521,6 +521,22 @@ export default class Bar {
             this.hide_add_icon();
         });
 
+        $.on(this.group, 'mouseup', () => {
+            // Use setTimeout to allow gantt's mouseup to fire first
+            // This ensures bar_being_dragged gets updated before we check it
+            setTimeout(() => {
+                // Reset dragging flag on mouseup if not actually dragging
+                // bar_being_dragged will be true if actual drag occurred
+                if (this.gantt.bar_being_dragged !== true) {
+                    this.is_dragging = false;
+                    // Show add icon if hovering
+                    if (this.$add_icon_group && this.is_hovering_bar) {
+                        this.$add_icon_group.classList.remove('hide');
+                    }
+                }
+            }, 0);
+        });
+
         $.on(this.group, 'click', () => {
             // Don't trigger click if we just finished dragging
             if (this.action_completed || this.gantt.bar_being_dragged) return;
