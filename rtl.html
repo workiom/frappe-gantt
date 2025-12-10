@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
     <head>
         <meta charset="UTF-8" />
-        <title>Simple Gantt</title>
+        <title>مخطط Gantt البسيط</title>
         <link rel="stylesheet" href="dist/frappe-gantt.css" />
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
@@ -35,14 +35,14 @@
     </head>
     <body>
         <div class="container">
-            <h1 class="text-center pt-3 pb-2 font-serif">Frappe Gantt</h1>
+            <h1 class="text-center pt-3 pb-2 font-serif">مخطط Gantt Frappe</h1>
             <hr />
             <div class="row my-5">
                 <div class="col-md-3 px-5 py-1">
-                    <h3 class="text-center">Set edit access</h3>
+                    <h3 class="text-center">تعيين صلاحيات التحرير</h3>
                     <p>
-                        Easy make sure your employees change <em>only</em> what
-                        they need to.
+                        تأكد بسهولة من أن موظفيك يغيرون <em>فقط</em> ما
+                        يحتاجون إليه.
                     </p>
                     <div class="form-check form-switch">
                         <input
@@ -53,7 +53,7 @@
                             checked
                         />
                         <label class="form-check-label" for="mutable-general"
-                            >Editable</label
+                            >قابل للتحرير</label
                         >
                     </div>
                     <div class="form-check form-switch">
@@ -65,7 +65,7 @@
                             checked
                         />
                         <label class="form-check-label" for="mutable-general"
-                            >Progress editable</label
+                            >التقدم قابل للتحرير</label
                         >
                     </div>
                     <div class="form-check form-switch">
@@ -77,7 +77,7 @@
                             checked
                         />
                         <label class="form-check-label" for="mutable-general"
-                            >Dates editable</label
+                            >التواريخ قابلة للتحرير</label
                         >
                     </div>
                 </div>
@@ -87,10 +87,10 @@
             <div class="row my-5">
                 <div class="chart col-md-9" id="sideheader"></div>
                 <div class="col-md-3 px-5 py-1">
-                    <h3 class="text-center">Versatile Actions</h3>
+                    <h3 class="text-center">إجراءات متعددة الاستخدامات</h3>
                     <p>
-                        Change the view mode, or scroll to today, or add
-                        anything you like <sup>β</sup>.
+                        قم بتغيير وضع العرض، أو انتقل إلى اليوم، أو أضف
+                        أي شيء تريده <sup>β</sup>.
                     </p>
                     <div class="form-check form-switch">
                         <input
@@ -101,7 +101,7 @@
                             checked
                         />
                         <label class="form-check-label" for="mutable-general"
-                            >Scroll to Today</label
+                            >الانتقال إلى اليوم</label
                         >
                     </div>
                     <div class="form-check form-switch">
@@ -113,7 +113,7 @@
                             checked
                         />
                         <label class="form-check-label" for="mutable-general"
-                            >Change View Mode</label
+                            >تغيير وضع العرض</label
                         >
                     </div>
                 </div>
@@ -121,10 +121,10 @@
 
             <div class="row my-5">
                 <div class="col-md-3 px-5 py-1">
-                    <h3 class="text-center">Mark Holidays</h3>
+                    <h3 class="text-center">تمييز الإجازات</h3>
                     <p>
-                        Be it public holidays, company milestones, or just
-                        weekends, you can see it all.
+                        سواء كانت عطلات رسمية، أو معالم الشركة، أو مجرد
+                        عطلات نهاية الأسبوع، يمكنك رؤية كل شيء.
                     </p>
                     <div class="form-check form-switch">
                         <input
@@ -134,7 +134,7 @@
                             id="toggle-weekends"
                         />
                         <label class="form-check-label" for="toggle-weekends"
-                            >Show weekends</label
+                            >إظهار عطلات نهاية الأسبوع</label
                         >
                     </div>
                     <div class="form-check form-switch">
@@ -145,7 +145,7 @@
                             id="custom-weekends"
                         />
                         <label class="form-check-label" for="custom-weekends"
-                            >Custom weekends</label
+                            >عطلات نهاية أسبوع مخصصة</label
                         >
                     </div>
                 </div>
@@ -154,10 +154,10 @@
 
             <div class="row my-5">
                 <div class="col-md-3 px-5 py-1">
-                    <h3 class="text-center">...or <em>ignore</em> them</h3>
+                    <h3 class="text-center">...أو <em>تجاهلها</em></h3>
                     <p>
-                        Remove time periods from your Gantt - they're now
-                        completely ignored.
+                        قم بإزالة الفترات الزمنية من مخطط Gantt الخاص بك - سيتم
+                        تجاهلها تمامًا الآن.
                     </p>
                     <div class="form-check form-switch">
                         <input
@@ -168,7 +168,7 @@
                             checked
                         />
                         <label class="form-check-label" for="toggle-weekends"
-                            >Ignore weekends</label
+                            >تجاهل عطلات نهاية الأسبوع</label
                         >
                     </div>
                 </div>
@@ -178,9 +178,9 @@
             <div class="row my-5">
                 <div class="chart col-md-9" id="dependencies"></div>
                 <div class="col-md-3 px-5 py-1">
-                    <h3 class="text-center">Smart Dependencies</h3>
+                    <h3 class="text-center">التبعيات الذكية</h3>
                     <p>
-                        Control how dependent tasks behave. Try dragging the parent task!
+                        تحكم في كيفية تصرف المهام التابعة. جرب سحب المهمة الأصلية!
                     </p>
                     <div class="form-check">
                         <input
@@ -191,7 +191,7 @@
                             value="fixed"
                         />
                         <label class="form-check-label" for="dep-fixed">
-                            Fixed (move together)
+                            ثابت (التحرك معًا)
                         </label>
                     </div>
                     <div class="form-check">
@@ -204,7 +204,7 @@
                             checked
                         />
                         <label class="form-check-label" for="dep-fs">
-                            Finish-to-Start
+                            من النهاية إلى البداية
                         </label>
                     </div>
                     <div class="form-check">
@@ -216,7 +216,7 @@
                             value="start-to-start"
                         />
                         <label class="form-check-label" for="dep-ss">
-                            Start-to-Start
+                            من البداية إلى البداية
                         </label>
                     </div>
                     <div class="form-check">
@@ -228,16 +228,16 @@
                             value="finish-to-finish"
                         />
                         <label class="form-check-label" for="dep-ff">
-                            Finish-to-Finish
+                            من النهاية إلى النهاية
                         </label>
                     </div>
                 </div>
             </div>
             <div class="row my-5">
                 <div class="col-md-3 px-5 py-1">
-                    <h3 class="text-center">Critical Path</h3>
+                    <h3 class="text-center">المسار الحرج</h3>
                     <p>
-                        Highlight the critical tasks in your project with red arrows.
+                        قم بتمييز المهام الحرجة في مشروعك بأسهم حمراء.
                     </p>
                     <div class="form-check form-switch">
                         <input
@@ -248,7 +248,7 @@
                             checked
                         />
                         <label class="form-check-label" for="toggle-critical-path">
-                            Show Critical Path
+                            إظهار المسار الحرج
                         </label>
                     </div>
                 </div>
@@ -257,13 +257,13 @@
             <div class="row my-4">
                 <div class="col-md-9 chart" id="styling"></div>
                 <div class="col-md-3 px-4">
-                    <h3 class="text-center">Control the styles completely.</h3>
-                    <strong>Modify Grid</strong>
+                    <h3 class="text-center">تحكم في الأنماط بشكل كامل.</h3>
+                    <strong>تعديل الشبكة</strong>
                     <div class="input-group row">
                         <label
                             for="grid-height"
                             class="form-label col-sm-5 col-form-label"
-                            ><small>Grid Height:</small></label
+                            ><small>ارتفاع الشبكة:</small></label
                         >
                         <div class="col-sm-7">
                             <input
@@ -280,7 +280,7 @@
                         <label
                             for="padding"
                             class="form-label col-sm-5 col-form-label"
-                            ><small>Padding:</small></label
+                            ><small>التباعد:</small></label
                         >
                         <div class="col-sm-7">
                             <input
@@ -297,7 +297,7 @@
                         <label
                             for="column-width"
                             class="form-label col-sm-5 col-form-label"
-                            ><small>Column Width:</small></label
+                            ><small>عرض العمود:</small></label
                         >
                         <div class="col-sm-7">
                             <input
@@ -311,13 +311,13 @@
                         </div>
                     </div>
                     <div class="pt-3">
-                        <strong>Modify Bar</strong>
+                        <strong>تعديل الشريط</strong>
                     </div>
                     <div class="input-group row">
                         <label
                             for="bar-height"
                             class="form-label col-sm-5 col-form-label"
-                            ><small>Height:</small></label
+                            ><small>الارتفاع:</small></label
                         >
                         <div class="col-sm-7">
                             <input
@@ -334,7 +334,7 @@
                         <label
                             for="bar-radius"
                             class="form-label col-sm-5 col-form-label"
-                            ><small>Radius:</small></label
+                            ><small>نصف القطر:</small></label
                         >
                         <div class="col-sm-7">
                             <input
@@ -351,7 +351,7 @@
                         <label
                             for="arrow-curve"
                             class="form-label col-sm-5 col-form-label"
-                            ><small>Arrow curving:</small></label
+                            ><small>انحناء السهم:</small></label
                         >
                         <div class="col-sm-7">
                             <input
@@ -369,13 +369,13 @@
 
             <div class="row my-4">
                 <div class="col-md-3">
-                    <h2>Frappe Gantt - <em>for you</em>.</h2>
+                    <h2>مخطط Gantt Frappe - <em>من أجلك</em>.</h2>
                     <p>
-                        Insane levels of customizability - change anything,
-                        everything.
+                        مستويات جنونية من القابلية للتخصيص - غيّر أي شيء،
+                        كل شيء.
                     </p>
                     <div class="input-group">
-                        <label class="input-group-text">Snap By: </label>
+                        <label class="input-group-text">المحاذاة بـ: </label>
                         <input
                             class="form-control"
                             id="snap-at-qty"
@@ -383,17 +383,17 @@
                             value="1"
                         />
                         <select class="form-select" id="snap-at-scale">
-                            <option value="s">Second</option>
-                            <option value="min">Minute</option>
-                            <option value="h">Hour</option>
-                            <option value="d" selected>Day</option>
-                            <option value="m">Month</option>
-                            <option value="y">Year</option>
+                            <option value="s">ثانية</option>
+                            <option value="min">دقيقة</option>
+                            <option value="h">ساعة</option>
+                            <option value="d" selected>يوم</option>
+                            <option value="m">شهر</option>
+                            <option value="y">سنة</option>
                         </select>
                     </div>
                     <div class="form-check form-switch my-2">
                         <label class="form-check-label" for="auto-move-label"
-                            >Toggle auto-moving label</label
+                            >تبديل التسمية المتحركة تلقائيًا</label
                         >
                         <input
                             class="form-check-input"
@@ -429,7 +429,7 @@
                 {
                     start: daysSince(-2),
                     end: daysSince(2),
-                    name: 'Redesign website',
+                    name: 'إعادة تصميم الموقع',
                     id: 'Task 0',
                     progress: random(),
                     color: '#4ab29a',
@@ -439,7 +439,7 @@
                 {
                     start: daysSince(3),
                     duration: '6d',
-                    name: 'Write new content',
+                    name: 'كتابة محتوى جديد',
                     id: 'Task 1',
                     progress: random(),
                     important: true,
@@ -451,7 +451,7 @@
                 {
                     start: daysSince(4),
                     duration: '2d',
-                    name: 'Apply new styles',
+                    name: 'تطبيق أنماط جديدة',
                     id: 'Task 2',
                     progress: random(),
                     color: '#4ab29a',
@@ -461,7 +461,7 @@
                 {
                     start: daysSince(-4),
                     end: daysSince(0),
-                    name: 'Review',
+                    name: 'مراجعة',
                     id: 'Task 3',
                     progress: random(),
                     color: '#4ab29a',
@@ -474,14 +474,14 @@
                 {
                     start: daysSince(-30),
                     end: daysSince(-10),
-                    name: 'Redesign website',
+                    name: 'إعادة تصميم الموقع',
                     id: 'Task 0',
                     progress: random(),
                 },
                 {
                     start: daysSince(-15),
                     duration: '21d',
-                    name: 'Write new content',
+                    name: 'كتابة محتوى جديد',
                     id: 'Task 1',
                     progress: random(),
                     important: true,
@@ -489,14 +489,14 @@
                 {
                     start: daysSince(10),
                     duration: '14d',
-                    name: 'Review',
+                    name: 'مراجعة',
                     id: 'Task 3',
                     progress: random(),
                 },
                 {
                     start: daysSince(-3),
                     duration: '4d',
-                    name: 'Publish',
+                    name: 'نشر',
                     id: 'Task 4',
                     progress: random(),
                 },
@@ -506,14 +506,14 @@
                 {
                     start: daysSince(-2),
                     end: daysSince(2),
-                    name: 'Redesign website',
+                    name: 'إعادة تصميم الموقع',
                     id: 'Task 0',
                     progress: random(),
                 },
                 {
                     start: daysSince(3),
                     duration: '6d',
-                    name: 'Write new content',
+                    name: 'كتابة محتوى جديد',
                     id: 'Task 1',
                     progress: random(),
                     dependencies: 'Task 0',
@@ -522,14 +522,14 @@
                 {
                     start: daysSince(4),
                     duration: '2d',
-                    name: 'Apply new styles',
+                    name: 'تطبيق أنماط جديدة',
                     id: 'Task 2',
                     progress: random(),
                 },
                 {
                     start: daysSince(-4),
                     end: daysSince(0),
-                    name: 'Review',
+                    name: 'مراجعة',
                     id: 'Task 3',
                     custom_class: 'readonly',
                     progress: random(),
@@ -538,7 +538,7 @@
                 {
                     start: daysSince(10),
                     end: daysSince(12),
-                    name: 'Project Phase 1',
+                    name: 'المرحلة الأولى للمشروع',
                     id: 'Parent 1',
                     progress: random(),
                 },
@@ -546,7 +546,7 @@
                 {
                     start: daysSince(12),
                     duration: '3d',
-                    name: 'Planning',
+                    name: 'تخطيط',
                     id: 'Child 1.1',
                     progress: random(),
                     dependencies: 'Parent 1',
@@ -555,7 +555,7 @@
                 {
                     start: daysSince(13),
                     duration: '2d',
-                    name: 'Development',
+                    name: 'تطوير',
                     id: 'Child 1.2',
                     progress: random(),
                     dependencies: 'Child 1.1',
@@ -564,7 +564,7 @@
                 {
                     start: daysSince(15),
                     duration: '3d',
-                    name: 'Testing',
+                    name: 'اختبار',
                     id: 'Child 1.3',
                     progress: random(),
                     dependencies: 'Child 1.2',
@@ -573,7 +573,7 @@
                 {
                     start: daysSince(17),
                     duration: '2d',
-                    name: 'Unit Testing',
+                    name: 'اختبار الوحدات',
                     id: 'SubChild 1.3.1',
                     progress: random(),
                     dependencies: 'Child 1.3',
@@ -582,7 +582,7 @@
                 {
                     start: daysSince(16),
                     duration: '4d',
-                    name: 'Integration Testing',
+                    name: 'اختبار التكامل',
                     id: 'SubChild 1.3.2',
                     progress: random(),
                     dependencies: 'Child 1.3',
@@ -592,14 +592,14 @@
                 {
                     start: daysSince(-7),
                     end: daysSince(-5),
-                    name: 'Initial brainstorming',
+                    name: 'جلسة عصف ذهني أولية',
                     id: 'Task 0',
                     progress: random(),
                 },
                 {
                     start: daysSince(-3),
                     end: daysSince(1),
-                    name: 'Develop wireframe',
+                    name: 'تطوير إطار السلكي',
                     id: 'Task 1',
                     progress: random(),
                     dependencies: 'Task 0',
@@ -607,7 +607,7 @@
                 {
                     start: daysSince(-1),
                     duration: '4d',
-                    name: 'Client meeting',
+                    name: 'اجتماع العميل',
                     id: 'Task 2',
                     progress: random(),
                     important: true,
@@ -615,7 +615,7 @@
                 {
                     start: daysSince(1),
                     duration: '7d',
-                    name: 'Create prototype',
+                    name: 'إنشاء نموذج أولي',
                     id: 'Task 3',
                     dependencies: 'Task 2',
                     progress: random(),
@@ -623,7 +623,7 @@
                 {
                     start: daysSince(3),
                     duration: '5d',
-                    name: 'Test design with users',
+                    name: 'اختبار التصميم مع المستخدمين',
                     dependencies: 'Task 2',
                     id: 'Task 4',
                     progress: random(),
@@ -632,21 +632,21 @@
                 {
                     start: daysSince(5),
                     end: daysSince(10),
-                    name: 'Write technical documentation',
+                    name: 'كتابة الوثائق التقنية',
                     id: 'Task 5',
                     progress: random(),
                 },
                 {
                     start: daysSince(8),
                     duration: '3d',
-                    name: 'Prepare demo',
+                    name: 'تحضير العرض التوضيحي',
                     id: 'Task 6',
                     progress: random(),
                 },
                 {
                     start: daysSince(10),
                     end: daysSince(12),
-                    name: 'Final client review',
+                    name: 'المراجعة النهائية للعميل',
                     id: 'Task 7',
                     progress: random(),
                     important: true,
@@ -654,14 +654,14 @@
                 {
                     start: daysSince(14),
                     duration: '6d',
-                    name: 'Implement feedback',
+                    name: 'تنفيذ الملاحظات',
                     id: 'Task 8',
                     progress: random(),
                 },
                 {
                     start: daysSince(16),
                     duration: '4d',
-                    name: 'Launch website',
+                    name: 'إطلاق الموقع',
                     id: 'Task 9',
                     progress: random(),
                     important: true,
@@ -687,14 +687,20 @@
                 { name: 'Christmas', date: '2024-12-25' },
             ];
 
-            const mutablity = new Gantt('#mutability', tasks);
+            const defaultOptions = {
+                language: 'ar',
+                isRTL: true,
+            }
+            const mutablity = new Gantt('#mutability', tasks, defaultOptions);
             const sideheader = new Gantt('#sideheader', tasksSpread, {
+                ...defaultOptions,
                 today_button: true,
                 view_mode_select: true,
                 holidays: null,
             });
 
             const holidays = new Gantt('#holidays', tasksSpread, {
+                ...defaultOptions,
                 holidays: {
                     '#bfdbfe': [],
                     '#a3e635': HOLIDAYS,
@@ -702,12 +708,14 @@
             });
 
             const ignore = new Gantt('#ignore', tasks, {
+                ...defaultOptions,
                 ignore: ['weekend', ...HOLIDAYS.map((k) => k.date)],
                 holidays: null,
                 scroll_to: daysSince(-10),
             });
 
             const dependencies = new Gantt('#dependencies', tasksDependencies, {
+                ...defaultOptions,
                 dependencies_type: 'finish-to-start',
                 holidays: null,
                 scroll_to: daysSince(-5),
@@ -717,14 +725,14 @@
                 {
                     start: daysSince(-5),
                     end: daysSince(-1),
-                    name: 'Design Phase',
+                    name: 'مرحلة التصميم',
                     id: 'Task 0',
                     progress: random(),
                 },
                 {
                     start: daysSince(-1),
                     duration: '4d',
-                    name: 'Development',
+                    name: 'تطوير',
                     id: 'Task 1',
                     progress: random(),
                     dependencies: 'Task 0',
@@ -732,7 +740,7 @@
                 {
                     start: daysSince(1),
                     duration: '3d',
-                    name: 'Documentation',
+                    name: 'توثيق',
                     id: 'Task 2',
                     progress: random(),
                     dependencies: 'Task 0',
@@ -740,7 +748,7 @@
                 {
                     start: daysSince(8),
                     duration: '4d',
-                    name: 'Testing',
+                    name: 'اختبار',
                     id: 'Task 3',
                     progress: random(),
                     dependencies: 'Task 1',
@@ -748,7 +756,7 @@
                 {
                     start: daysSince(13),
                     duration: '2d',
-                    name: 'Deployment',
+                    name: 'نشر',
                     id: 'Task 4',
                     progress: random(),
                     dependencies: 'Task 3',
@@ -756,6 +764,7 @@
             ];
 
             const criticalPath = new Gantt('#critical-path', tasksCriticalPath, {
+                ...defaultOptions,
                 critical_path: true,
                 holidays: null,
                 popup_on: 'hover',
@@ -770,11 +779,13 @@
             });
 
             const styling = new Gantt('#styling', tasksMany, {
+                ...defaultOptions,
                 holidays: null,
                 scroll_to: daysSince(-10),
             });
 
             const advanced = new Gantt('#advanced', tasksSpread, {
+                ...defaultOptions,
                 holidays: null,
                 view_mode_select: true,
                 snap_at: '1d',
