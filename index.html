@@ -367,6 +367,28 @@
                 </div>
             </div>
 
+            <div class="row my-5">
+                <div class="col-md-3 px-5 py-1">
+                    <h3 class="text-center">RTL Direction Control</h3>
+                    <p>
+                        Force LTR (Left-to-Right) direction even in RTL contexts.
+                    </p>
+                    <div class="form-check form-switch">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            checked
+                            id="toggle-isrtl"
+                        />
+                        <label class="form-check-label" for="toggle-isrtl">
+                            Force LTR Direction
+                        </label>
+                    </div>
+                </div>
+                <div class="chart col-md-9" id="rtl-demo" style="direction: rtl;"></div>
+            </div>
+
             <div class="row my-4">
                 <div class="col-md-3">
                     <h2>Frappe Gantt - <em>for you</em>.</h2>
@@ -782,6 +804,11 @@
                 scroll_to: 'today',
             });
 
+            const rtlDemo = new Gantt('#rtl-demo', tasks, {
+                holidays: null,
+                isRTL: true,
+            });
+
             // Handle dependency type radio buttons
             document.querySelectorAll('input[name="dep-type"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
@@ -871,6 +898,12 @@
                                 document.getElementById('snap-at-qty').value +
                                 val,
                         }),
+                    },
+                ],
+                [
+                    rtlDemo,
+                    {
+                        'toggle-isrtl': 'isRTL',
                     },
                 ],
             ];

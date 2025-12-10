@@ -123,6 +123,7 @@ const DEFAULT_OPTIONS = {
     infinite_padding: true,
     holidays: { 'var(--g-weekend-highlight-color)': 'weekend' },
     ignore: [],
+    isRTL: false,
     language: 'en',
     lines: 'both',
     move_dependencies: true,

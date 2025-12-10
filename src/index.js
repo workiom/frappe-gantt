@@ -13,6 +13,7 @@ export default class Gantt {
     constructor(wrapper, tasks, options) {
         this.setup_wrapper(wrapper);
         this.setup_options(options);
+        this.apply_rtl_direction();
         this.setup_tasks(tasks);
         this.change_view_mode();
         this.bind_events();
@@ -68,6 +69,12 @@ export default class Gantt {
             classes: 'popup-wrapper',
             append_to: this.$container,
         });
+    }
+
+    apply_rtl_direction() {
+        if (this.options.isRTL) {
+            this.$container.style.direction = 'ltr';
+        }
     }
 
     setup_options(options) {
@@ -134,6 +141,7 @@ export default class Gantt {
 
     update_options(options) {
         this.setup_options({ ...this.original_options, ...options });
+        this.apply_rtl_direction();
         this.change_view_mode(undefined, true);
     }
 
