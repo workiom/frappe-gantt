@@ -18,6 +18,7 @@ export default class Bar {
             this.group.classList = ['bar-wrapper'];
         }
 
+        this.unbind();
         this.prepare_values();
         this.draw();
         this.bind();
@@ -435,19 +436,36 @@ export default class Bar {
         this.setup_click_event();
     }
 
+    unbind() {
+        if (this.invalid) return;
+        // Remove event listeners from the group element
+        if (this.group && this.event_listeners) {
+            this.event_listeners.forEach(({ event, handler }) => {
+                $.off(this.group, event, handler);
+            });
+            this.event_listeners = [];
+        }
+    }
+
     setup_click_event() {
+        // Initialize event listeners array
+        this.event_listeners = [];
+
         let task_id = this.task.id;
-        $.on(this.group, 'mouseover', (e) => {
+
+        const mouseoverHandler = (e) => {
             this.gantt.trigger_event('hover', [
                 this.task,
                 e.screenX,
                 e.screenY,
                 e,
             ]);
-        });
+        };
+        $.on(this.group, 'mouseover', mouseoverHandler);
+        this.event_listeners.push({ event: 'mouseover', handler: mouseoverHandler });
 
         if (this.gantt.options.popup_on === 'click') {
-            $.on(this.group, 'mouseup', (e) => {
+            const clickPopupHandler = (e) => {
                 const posX = e.offsetX || e.layerX;
                 if (this.$handle_progress) {
                     const cx = +this.$handle_progress.getAttribute('cx');
@@ -460,10 +478,13 @@ export default class Bar {
                     task: this.task,
                     target: this.$bar,
                 });
-            });
+            };
+            $.on(this.group, 'click', clickPopupHandler);
+            this.event_listeners.push({ event: 'click', handler: clickPopupHandler });
         }
+
         let timeout;
-        $.on(this.group, 'mouseenter', (e) => {
+        const mouseenterHandler = (e) => {
             timeout = setTimeout(() => {
                 if (this.gantt.options.popup_on === 'hover')
                     this.gantt.show_popup({
@@ -489,8 +510,11 @@ export default class Bar {
                     this.$add_icon_group.classList.remove('hide');
                 }
             }
-        });
-        $.on(this.group, 'mouseleave', () => {
+        };
+        $.on(this.group, 'mouseenter', mouseenterHandler);
+        this.event_listeners.push({ event: 'mouseenter', handler: mouseenterHandler });
+
+        const mouseleaveHandler = () => {
             clearTimeout(timeout);
             if (this.gantt.options.popup_on === 'hover')
                 this.gantt.popup?.hide?.();
@@ -513,15 +537,19 @@ export default class Bar {
                     }
                 }, 200);
             }
-        });
+        };
+        $.on(this.group, 'mouseleave', mouseleaveHandler);
+        this.event_listeners.push({ event: 'mouseleave', handler: mouseleaveHandler });
 
-        $.on(this.group, 'mousedown', () => {
+        const mousedownHandler = () => {
             // Mark as dragging and hide add icon
             this.is_dragging = true;
             this.hide_add_icon();
-        });
+        };
+        $.on(this.group, 'mousedown', mousedownHandler);
+        this.event_listeners.push({ event: 'mousedown', handler: mousedownHandler });
 
-        $.on(this.group, 'mouseup', () => {
+        const mouseupHandler = () => {
             // Use setTimeout to allow gantt's mouseup to fire first
             // This ensures bar_being_dragged gets updated before we check it
             setTimeout(() => {
@@ -535,15 +563,19 @@ export default class Bar {
                     }
                 }
             }, 0);
-        });
+        };
+        $.on(this.group, 'mouseup', mouseupHandler);
+        this.event_listeners.push({ event: 'mouseup', handler: mouseupHandler });
 
-        $.on(this.group, 'click', () => {
+        const clickHandler = () => {
             // Don't trigger click if we just finished dragging
             if (this.action_completed || this.gantt.bar_being_dragged) return;
             this.gantt.trigger_event('click', [this.task]);
-        });
+        };
+        $.on(this.group, 'click', clickHandler);
+        this.event_listeners.push({ event: 'click', handler: clickHandler });
 
-        $.on(this.group, 'dblclick', (e) => {
+        const dblclickHandler = () => {
             if (this.action_completed) {
                 // just finished a move action, wait for a few seconds
                 return;
@@ -553,9 +585,12 @@ export default class Bar {
                 this.gantt.popup.parent.classList.remove('hide');
 
             this.gantt.trigger_event('double_click', [this.task]);
-        });
+        };
+        $.on(this.group, 'dblclick', dblclickHandler);
+        this.event_listeners.push({ event: 'dblclick', handler: dblclickHandler });
+
         let tapedTwice = false;
-        $.on(this.group, 'touchstart', (e) => {
+        const touchstartHandler = (e) => {
             if (!tapedTwice) {
                 tapedTwice = true;
                 setTimeout(function () {
@@ -575,7 +610,9 @@ export default class Bar {
                 this.gantt.popup.parent.classList.remove('hide');
 
             this.gantt.trigger_event('double_click', [this.task]);
-        });
+        };
+        $.on(this.group, 'touchstart', touchstartHandler);
+        this.event_listeners.push({ event: 'touchstart', handler: touchstartHandler });
     }
 
     update_bar_position({ x = null, width = null }) {
@@ -745,7 +782,7 @@ export default class Bar {
 
     set_action_completed() {
         this.action_completed = true;
-        setTimeout(() => (this.action_completed = false), 1000);
+        setTimeout(() => (this.action_completed = false), 10);
         // Mark dragging as complete
         this.is_dragging = false;
         // Show add icon if hovering
