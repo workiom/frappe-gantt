@@ -6,6 +6,7 @@ export default class Arrow {
         this.from_task = from_task;
         this.to_task = to_task;
         this.is_critical = this.check_critical_path();
+        this.is_invalid = this.check_invalid_dependency();
 
         this.calculate_path();
         this.draw();
@@ -17,6 +18,39 @@ export default class Arrow {
         // Check if both from_task and to_task are on the critical path
         return this.from_task.task._is_critical === true &&
                this.to_task.task._is_critical === true;
+    }
+
+    check_invalid_dependency() {
+        const dependencies_type = this.to_task.task.dependencies_type ||
+                                  this.gantt.options.dependencies_type;
+
+        // Fixed dependencies use old logic
+        if (dependencies_type === 'fixed') {
+            return this.to_task.$bar.getX() < this.from_task.$bar.getX();
+        }
+
+        const parent_task = this.from_task.task;
+        const child_task = this.to_task.task;
+
+        switch(dependencies_type) {
+            case 'finish-to-start':
+                // Child task cannot start before parent finishes
+                return child_task._start < parent_task._end;
+
+            case 'start-to-start':
+                // Child task cannot start before parent starts
+                return child_task._start < parent_task._start;
+
+            case 'finish-to-finish':
+                // Child task cannot finish before parent finishes
+                return child_task._end < parent_task._end;
+
+            case 'start-to-finish':
+                // Child task cannot finish before parent starts
+                return child_task._end < parent_task._start;
+        }
+
+        return false;
     }
 
     calculate_path() {
@@ -98,16 +132,35 @@ export default class Arrow {
     }
 
     draw() {
+        let arrowClass = '';
+        if (this.is_invalid) {
+            arrowClass = 'arrow-invalid';
+        } else if (this.is_critical) {
+            arrowClass = 'arrow-critical';
+        }
+
         this.element = createSVG('path', {
             d: this.path,
             'data-from': this.from_task.task.id,
             'data-to': this.to_task.task.id,
-            class: this.is_critical ? 'arrow-critical' : '',
+            class: arrowClass,
         });
     }
 
     update() {
         this.calculate_path();
         this.element.setAttribute('d', this.path);
+
+        // Update invalid state
+        this.is_invalid = this.check_invalid_dependency();
+
+        // Update class
+        let arrowClass = '';
+        if (this.is_invalid) {
+            arrowClass = 'arrow-invalid';
+        } else if (this.is_critical) {
+            arrowClass = 'arrow-critical';
+        }
+        this.element.setAttribute('class', arrowClass);
     }
 }

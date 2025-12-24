@@ -1462,12 +1462,13 @@ export default class Gantt {
 
             // Update dependent tasks based on dependencies_type
             // Only update for the parent bar that was actually moved
-            const parent_bar = this.get_bar(parent_bar_id);
-            if (parent_bar && parent_bar.$bar.finaldx) {
-                const dependent_changes = this.update_dependent_tasks_by_type(parent_bar);
-                // Add dependent task changes to the list
-                tasks_changed.push(...dependent_changes);
-            }
+            // DISABLED: Allow invalid dependencies instead of auto-updating
+            // const parent_bar = this.get_bar(parent_bar_id);
+            // if (parent_bar && parent_bar.$bar.finaldx) {
+            //     const dependent_changes = this.update_dependent_tasks_by_type(parent_bar);
+            //     // Add dependent task changes to the list
+            //     tasks_changed.push(...dependent_changes);
+            // }
 
             // Recalculate critical path if enabled and any bar was moved
             if (this.options.critical_path && bars.some(bar => bar.$bar.finaldx)) {

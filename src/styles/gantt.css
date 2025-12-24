@@ -272,6 +272,10 @@
         stroke: var(--g-arrow-critical-color);
     }
 
+    & .arrow-invalid {
+        stroke: var(--g-arrow-invalid-color);
+    }
+
     & .bar-wrapper .bar {
         fill: var(--g-bar-color);
         stroke: var(--g-bar-border);

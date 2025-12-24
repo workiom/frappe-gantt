@@ -619,10 +619,7 @@ export default class Bar {
         const bar = this.$bar;
 
         if (x) {
-            // Validate against dependency constraints
-            if (!this.validate_dependency_constraints(x, width)) {
-                return;
-            }
+            // Allow invalid positions, but track the state
             this.update_attr(bar, 'x', x);
             this.x = x;
             this.$date_highlight.style.left = x + 'px';
