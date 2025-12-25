@@ -184,6 +184,11 @@ export default class Bar {
                 this.gantt.config.step) *
             this.gantt.config.column_width;
 
+        // Remove existing date highlight element if it exists to avoid duplicates
+        if (this.$date_highlight && this.$date_highlight.parentNode) {
+            this.$date_highlight.parentNode.removeChild(this.$date_highlight);
+        }
+
         let $date_highlight = this.gantt.create_el({
             classes: `date-range-highlight hide highlight-${this.task.id}`,
             width: this.width,
