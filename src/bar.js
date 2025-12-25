@@ -389,15 +389,15 @@ export default class Bar {
         if (this.invalid || this.gantt.options.readonly) return;
 
         const bar = this.$bar;
-        const handle_width = 3;
+        const handle_width = 8;
         this.handles = [];
         if (!this.gantt.options.readonly_dates) {
             this.handles.push(
                 createSVG('rect', {
-                    x: bar.getEndX() - handle_width / 2,
-                    y: bar.getY() + this.height / 4,
+                    x: bar.getEndX() - handle_width,
+                    y: bar.getY() + (this.height - this.height * 0.8) / 2,
                     width: handle_width,
-                    height: this.height / 2,
+                    height: this.height * 0.8,
                     rx: 2,
                     ry: 2,
                     class: 'handle right',
@@ -407,10 +407,10 @@ export default class Bar {
 
             this.handles.push(
                 createSVG('rect', {
-                    x: bar.getX() - handle_width / 2,
-                    y: bar.getY() + this.height / 4,
+                    x: bar.getX() - handle_width,
+                    y: bar.getY() + (this.height - this.height * 0.8) / 2,
                     width: handle_width,
-                    height: this.height / 2,
+                    height: this.height * 0.8,
                     rx: 2,
                     ry: 2,
                     class: 'handle left',
