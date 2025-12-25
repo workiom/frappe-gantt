@@ -238,6 +238,13 @@
                             Finish-to-Finish
                         </label>
                     </div>
+                    <hr class="my-3" />
+                    <button
+                        id="add-dependent-task-btn"
+                        class="btn btn-primary w-100"
+                    >
+                        Add Task Depending on Testing
+                    </button>
                 </div>
             </div>
             <div class="row my-5">
@@ -547,15 +554,15 @@
                 },
                 // Parent task with children
                 {
-                    start: daysSince(10),
-                    end: daysSince(12),
+                    start: daysSince(1),
+                    end: daysSince(3),
                     name: 'Project Phase 1',
                     id: 'Parent 1',
                     progress: random(),
                 },
                 // First child
                 {
-                    start: daysSince(12),
+                    start: daysSince(4),
                     duration: '3d',
                     name: 'Planning',
                     id: 'Child 1.1',
@@ -564,7 +571,7 @@
                 },
                 // Second child
                 {
-                    start: daysSince(13),
+                    start: daysSince(6),
                     duration: '2d',
                     name: 'Development',
                     id: 'Child 1.2',
@@ -573,7 +580,7 @@
                 },
                 // Third child with sub-children
                 {
-                    start: daysSince(15),
+                    start: daysSince(8),
                     duration: '3d',
                     name: 'Testing',
                     id: 'Child 1.3',
@@ -582,7 +589,7 @@
                 },
                 // First sub-child of third child
                 {
-                    start: daysSince(17),
+                    start: daysSince(10),
                     duration: '2d',
                     name: 'Unit Testing',
                     id: 'SubChild 1.3.1',
@@ -591,7 +598,7 @@
                 },
                 // Second sub-child of third child
                 {
-                    start: daysSince(16),
+                    start: daysSince(10),
                     duration: '4d',
                     name: 'Integration Testing',
                     id: 'SubChild 1.3.2',
@@ -819,6 +826,22 @@
                     const scroll = dependencies.$container.scrollLeft;
                     dependencies.$container.scrollLeft = scroll;
                 });
+            });
+
+            // Handle add dependent task button
+            let taskCounter = tasksDependencies.length;
+            document.getElementById('add-dependent-task-btn').addEventListener('click', () => {
+                const newTask = {
+                    start: daysSince(9),
+                    duration: '4d',
+                    name: `New Task ${taskCounter - tasksDependencies.length + 1}`,
+                    id: `Task ${taskCounter}`,
+                    progress: random(),
+                    dependencies: 'Child 1.3', // Depends on "Testing"
+                };
+                taskCounter++;
+                tasksDependencies.push(newTask);
+                dependencies.refresh(tasksDependencies);
             });
 
             const UPDATES = [
