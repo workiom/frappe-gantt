@@ -707,6 +707,10 @@
 
             const mutablity = new Gantt('#mutability', tasks, {
                 popup_on: "hover",
+                on_after_date_change: (task, start, end) => {
+                    debugger;
+                    alert('Task date changed: ' + start + ' to ' + end);
+                },
                 on_click: (task) => {
                     alert('Task clicked: ' + task.name);
                 }

@@ -1443,12 +1443,20 @@ export default class Gantt {
         });
 
         $.on(this.$svg, 'mouseup', (e) => {
+            const was_dragging = this.bar_being_dragged === true;
             this.bar_being_dragged = null;
             const tasks_changed = [];
 
             bars.forEach((bar) => {
                 const $bar = bar.$bar;
-                if (!$bar.finaldx) return;
+                if (!$bar.finaldx) {
+                    // No net movement, but if user was dragging, mark as completed
+                    // This prevents click events from firing after drag gestures
+                    if (was_dragging) {
+                        bar.set_action_completed();
+                    }
+                    return;
+                }
                 bar.date_changed();
                 bar.compute_progress();
                 bar.set_action_completed();
