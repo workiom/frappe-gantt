@@ -23,4 +23,6 @@
     --g-weekend-highlight-color: #f7f7f7;
     --g-task-column-bg: #ffffff;
     --g-task-row-bg: #ffffff;
+    --g-resize-handle-hover: rgba(59, 130, 246, 0.3);
+    --g-resize-handle-active: rgba(59, 130, 246, 0.5);
 }

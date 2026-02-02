@@ -10,6 +10,8 @@
     --g-progress-color: #8a8aff;
     --g-arrow-critical-color-dark: #f5c044;
     --g-arrow-invalid-color-dark: #ff7676;
+    --g-resize-handle-hover-dark: rgba(96, 165, 250, 0.4);
+    --g-resize-handle-active-dark: rgba(96, 165, 250, 0.6);
 }
 
 .dark > .gantt-container .gantt {
@@ -105,5 +107,13 @@
 
     & .task-row {
         background-color: #1a1a1a;
+    }
+
+    & .task-column-resize-handle:hover {
+        background-color: var(--g-resize-handle-hover-dark);
+    }
+
+    & .task-column.resizing .task-column-resize-handle {
+        background-color: var(--g-resize-handle-active-dark);
     }
 }

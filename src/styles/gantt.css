@@ -463,11 +463,11 @@
 }
 
 .task-column-resize-handle:hover {
-    background-color: rgba(59, 130, 246, 0.3);
+    background-color: var(--g-resize-handle-hover);
 }
 
 .task-column.resizing .task-column-resize-handle {
-    background-color: rgba(59, 130, 246, 0.5);
+    background-color: var(--g-resize-handle-active);
 }
 
 .task-column.resizing {
