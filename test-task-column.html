@@ -133,6 +133,12 @@
             <p>Task name column using a custom content function that <strong>returns an HTML string</strong>. This approach is simpler and works well for displaying formatted text with styling.</p>
             <div class="chart" id="gantt-custom-content"></div>
         </div>
+
+        <div class="section">
+            <h2>Tasks Without Start/End Dates</h2>
+            <p>This example demonstrates how the gantt chart handles tasks where some tasks don't have start and end dates defined. Tasks without dates can still be displayed in the task column.</p>
+            <div class="chart" id="gantt-no-dates"></div>
+        </div>
     </div>
 
     <script>
@@ -203,103 +209,103 @@
             },
             {
                 name: 'Budget approval',
-                id: 'Task 6.5',
+                id: 'Task 7',
                 progress: 60,
             },
             {
                 start: daysSince(11),
                 end: daysSince(14),
                 name: 'Final client review',
-                id: 'Task 7',
+                id: 'Task 8',
                 progress: 0,
             },
             {
                 start: daysSince(14),
                 duration: '6d',
                 name: 'Implement feedback',
-                id: 'Task 8',
-                dependencies: 'Task 7',
+                id: 'Task 9',
+                dependencies: 'Task 8',
                 progress: 0,
             },
             {
                 start: daysSince(15),
                 duration: '4d',
                 name: 'Quality assurance testing',
-                id: 'Task 9',
+                id: 'Task 10',
                 progress: 0,
             },
             {
                 start: daysSince(17),
                 duration: '3d',
                 name: 'Bug fixes and refinements',
-                id: 'Task 10',
-                dependencies: 'Task 9',
+                id: 'Task 11',
+                dependencies: 'Task 10',
                 progress: 0,
             },
             {
                 start: daysSince(19),
                 duration: '2d',
                 name: 'Performance optimization',
-                id: 'Task 11',
+                id: 'Task 12',
                 progress: 0,
             },
             {
                 start: daysSince(20),
                 duration: '5d',
                 name: 'Security audit',
-                id: 'Task 12',
+                id: 'Task 13',
                 progress: 0,
             },
             {
                 start: daysSince(21),
                 duration: '4d',
                 name: 'User acceptance testing',
-                id: 'Task 13',
-                dependencies: 'Task 10',
+                id: 'Task 14',
+                dependencies: 'Task 11',
                 progress: 0,
             },
             {
                 start: daysSince(24),
                 duration: '3d',
                 name: 'Deploy to staging',
-                id: 'Task 14',
-                dependencies: 'Task 12,Task 13',
+                id: 'Task 15',
+                dependencies: 'Task 13,Task 14',
                 progress: 0,
             },
             {
                 start: daysSince(26),
                 duration: '2d',
                 name: 'Staging environment tests',
-                id: 'Task 15',
-                dependencies: 'Task 14',
+                id: 'Task 16',
+                dependencies: 'Task 15',
                 progress: 0,
             },
             {
                 start: daysSince(28),
                 duration: '1d',
                 name: 'Production deployment',
-                id: 'Task 16',
-                dependencies: 'Task 15',
+                id: 'Task 17',
+                dependencies: 'Task 16',
                 progress: 0,
             },
             {
                 start: daysSince(29),
                 duration: '3d',
                 name: 'Post-launch monitoring',
-                id: 'Task 17',
-                dependencies: 'Task 16',
+                id: 'Task 18',
+                dependencies: 'Task 17',
                 progress: 0,
             },
         ];
 
         // Create gantt charts
-        const ganttDefault = new Gantt('#gantt-default', [...tasks], {
+        const ganttDefault = new Gantt('#gantt-default', tasks, {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,
         });
 
-        let ganttWithColumn = new Gantt('#gantt-with-column', [...tasks], {
+        let ganttWithColumn = new Gantt('#gantt-with-column', tasks, {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,
@@ -312,7 +318,7 @@
 
         // Example 1: Custom content using DOM element
         // The content function receives the task object and can return a DOM element
-        const ganttCustomWidth = new Gantt('#gantt-custom-width', [...tasks], {
+        const ganttCustomWidth = new Gantt('#gantt-custom-width', tasks, {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,
@@ -351,7 +357,7 @@
 
         // Example 2: Custom content using HTML string
         // The content function can also return an HTML string for simpler use cases
-        const ganttCustomContent = new Gantt('#gantt-custom-content', [...tasks], {
+        const ganttCustomContent = new Gantt('#gantt-custom-content', tasks, {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,
@@ -402,6 +408,96 @@
                     header_text: 'Task Name',
                 },
             });
+        });
+
+        // Example with tasks that don't have start/end dates
+        const tasksWithoutDates = [
+            {
+                name: 'Project kickoff',
+                id: 'Task A',
+                progress: 100,
+            },
+            {
+                name: 'Requirements gathering',
+                id: 'Task B',
+                progress: 70,
+            },
+            {
+                name: 'Stakeholder approval pending',
+                id: 'Task C',
+                progress: 50,
+            },
+            {
+                name: 'Design phase',
+                id: 'Task D',
+                progress: 40,
+            },
+            {
+                name: 'Budget review',
+                id: 'Task E',
+                progress: 0,
+            },
+            {
+                name: 'Development sprint 1',
+                id: 'Task F',
+                progress: 20,
+            },
+            {
+                name: 'Resource allocation',
+                id: 'Task G',
+                progress: 30,
+            },
+            {
+                name: 'Testing phase',
+                id: 'Task H',
+                progress: 0,
+            },
+            {
+                name: 'Documentation needed',
+                id: 'Task I',
+                progress: 0,
+            },
+            {
+                name: 'Client feedback review',
+                id: 'Task J',
+                progress: 60,
+            },
+            {
+                name: 'Final delivery',
+                id: 'Task K',
+                progress: 0,
+            },
+        ];
+
+        const ganttNoDates = new Gantt('#gantt-no-dates', tasksWithoutDates, {
+            view_mode: 'Day',
+            popup_on: 'hover',
+            infinite_padding: false,
+            task_column: {
+                enabled: true,
+                width: 250,
+                header_text: 'Task Name',
+                content: (task) => {
+                    // Determine progress badge styling
+                    let progressClass = task.progress === 0 ? 'none' : task.progress < 50 ? 'low' : '';
+
+                    return `
+                        <div class="custom-task-row">
+                            <div class="task-title">${task.name}</div>
+                            <div class="task-meta">
+                                <span class="progress-badge ${progressClass}">${task.progress}%</span>
+                                <span class="task-id">${task.id}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+            on_date_change: (task, start, end) => {
+                alert(`[on_date_change]\nTask "${task.name}" dates assigned!\nStart: ${start.toLocaleDateString()}\nEnd: ${end.toLocaleDateString()}`);
+            },
+            on_after_date_change: (task, start, end) => {
+                alert(`[on_after_date_change]\nTask "${task.name}" dates modified by drag/resize!\nStart: ${start.toLocaleDateString()}\nEnd: ${end.toLocaleDateString()}`);
+            },
         });
     </script>
 </body>

@@ -1306,9 +1306,9 @@ export default class Gantt {
             this.$container,
             'click',
             '.grid-row, .grid-header, .ignored-bar, .holiday-highlight',
-            (e) => {
+            (e, delegatedTarget) => {
                 // Check if click is on a grid-row (not header or other elements)
-                if (e.target.classList.contains('grid-row')) {
+                if (delegatedTarget && delegatedTarget.classList.contains('grid-row')) {
                     // Get the click position relative to the SVG
                     const svg = this.$svg;
                     const pt = svg.createSVGPoint();
@@ -1346,6 +1346,13 @@ export default class Gantt {
 
                         // Trigger date_change event
                         this.trigger_event('date_change', [
+                            task,
+                            task._start,
+                            task._end
+                        ]);
+
+                        // Trigger after_date_change event (for bar creation)
+                        this.trigger_event('after_date_change', [
                             task,
                             task._start,
                             task._end
@@ -1652,15 +1659,7 @@ export default class Gantt {
         });
 
         document.addEventListener('mouseup', () => {
-            is_dragging = false;
-            is_resizing_left = false;
-            is_resizing_right = false;
-            this.$container
-                .querySelector('.visible')
-                ?.classList?.remove?.('visible');
-        });
-
-        $.on(this.$svg, 'mouseup', (e) => {
+            // Handle bar drag completion before resetting flags
             const was_dragging = this.bar_being_dragged === true;
             this.bar_being_dragged = null;
             const tasks_changed = [];
@@ -1708,6 +1707,14 @@ export default class Gantt {
                     this.trigger_event('after_date_change', [task, start, end]);
                 });
             }
+
+            // Reset drag flags after handling callbacks
+            is_dragging = false;
+            is_resizing_left = false;
+            is_resizing_right = false;
+            this.$container
+                .querySelector('.visible')
+                ?.classList?.remove?.('visible');
         });
 
         this.bind_bar_progress();
