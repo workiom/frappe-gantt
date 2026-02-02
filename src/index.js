@@ -422,6 +422,7 @@ export default class Gantt {
         this.bind_holiday_labels();
         this.bind_bar_events();
         this.bind_task_column_resize();
+        this.bind_task_column_scroll();
     }
 
     render() {
@@ -644,7 +645,8 @@ export default class Gantt {
 
             // Position to align with grid rows (not bars)
             // Grid rows start at header_height + index * row_height
-            $row.style.top = task._index * row_height + 'px';
+            // Subtract 1px to align with grid lines
+            $row.style.top = task._index * row_height - 1 + 'px';
             $row.style.height = row_height + 'px';
 
             // Use custom content function if provided, otherwise default to task name
@@ -1512,10 +1514,13 @@ export default class Gantt {
         }
 
         $.on(this.$container, 'scroll', (e) => {
-            // Sync vertical scroll with task name column using transform
-            if (this.$task_column_content) {
-                const scrollTop = e.currentTarget.scrollTop;
-                this.$task_column_content.style.transform = `translateY(-${scrollTop}px)`;
+            // Sync vertical scroll with task name column
+            if (this.$task_column && !this._syncing_scroll) {
+                this._syncing_scroll = true;
+                this.$task_column.scrollTop = e.currentTarget.scrollTop;
+                requestAnimationFrame(() => {
+                    this._syncing_scroll = false;
+                });
             }
 
             let localBars = [];
@@ -1773,6 +1778,21 @@ export default class Gantt {
 
             // Trigger resize complete event
             this.trigger_event('task_column_resized', [this.options.task_column.width]);
+        });
+    }
+
+    bind_task_column_scroll() {
+        if (!this.$task_column) return;
+
+        $.on(this.$task_column, 'scroll', (e) => {
+            // Sync vertical scroll with the main container
+            if (!this._syncing_scroll) {
+                this._syncing_scroll = true;
+                this.$container.scrollTop = e.currentTarget.scrollTop;
+                requestAnimationFrame(() => {
+                    this._syncing_scroll = false;
+                });
+            }
         });
     }
 
