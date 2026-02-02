@@ -56,6 +56,43 @@
             border-bottom: 2px solid #4CAF50;
             padding-bottom: 5px;
         }
+        /* Custom task row styles */
+        .custom-task-row {
+            display: flex;
+            flex-direction: column;
+            padding: 4px 8px;
+            height: 100%;
+            justify-content: center;
+        }
+        .custom-task-row .task-title {
+            font-weight: 500;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        .custom-task-row .task-meta {
+            display: flex;
+            gap: 8px;
+            font-size: 11px;
+            color: #666;
+        }
+        .custom-task-row .progress-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+        .custom-task-row .progress-badge.low {
+            background: #ff9800;
+        }
+        .custom-task-row .progress-badge.none {
+            background: #9e9e9e;
+        }
+        .custom-task-row .task-id {
+            color: #999;
+            font-style: italic;
+        }
     </style>
     <script src="dist/frappe-gantt.umd.js"></script>
 </head>
@@ -86,9 +123,15 @@
         </div>
 
         <div class="section">
-            <h2>With Custom Width</h2>
-            <p>Task name column with custom width (200px).</p>
+            <h2>With Custom Content (DOM Element)</h2>
+            <p>Task name column using a custom content function that <strong>returns a DOM element</strong>. This approach is useful when you need to create complex interactive elements or attach event listeners.</p>
             <div class="chart" id="gantt-custom-width"></div>
+        </div>
+
+        <div class="section">
+            <h2>With Custom Content (HTML String)</h2>
+            <p>Task name column using a custom content function that <strong>returns an HTML string</strong>. This approach is simpler and works well for displaying formatted text with styling.</p>
+            <div class="chart" id="gantt-custom-content"></div>
         </div>
     </div>
 
@@ -262,14 +305,75 @@
             },
         });
 
+        // Example 1: Custom content using DOM element
+        // The content function receives the task object and can return a DOM element
         const ganttCustomWidth = new Gantt('#gantt-custom-width', tasks, {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,
             task_column: {
                 enabled: true,
-                width: 200,
+                width: 250,
                 header_text: 'Tasks',
+                content: (task) => {
+                    // Create DOM elements
+                    const container = document.createElement('div');
+                    container.style.padding = '4px 8px';
+                    container.style.display = 'flex';
+                    container.style.flexDirection = 'column';
+                    container.style.justifyContent = 'center';
+                    container.style.height = '100%';
+
+                    const title = document.createElement('div');
+                    title.textContent = task.name;
+                    title.style.fontWeight = '500';
+                    title.style.fontSize = '13px';
+                    title.style.marginBottom = '3px';
+
+                    const badge = document.createElement('span');
+                    badge.textContent = `${task.progress}% complete`;
+                    badge.style.fontSize = '11px';
+                    badge.style.color = '#666';
+                    badge.style.display = 'inline-block';
+
+                    container.appendChild(title);
+                    container.appendChild(badge);
+
+                    return container;
+                }
+            },
+        });
+
+        // Example 2: Custom content using HTML string
+        // The content function can also return an HTML string for simpler use cases
+        const ganttCustomContent = new Gantt('#gantt-custom-content', tasks, {
+            view_mode: 'Day',
+            popup_on: 'hover',
+            infinite_padding: false,
+            task_column: {
+                enabled: true,
+                width: 300,
+                header_text: 'Task Details',
+                content: (task) => {
+                    // Determine progress badge class
+                    let progressClass = 'progress-badge';
+                    if (task.progress === 0) {
+                        progressClass += ' none';
+                    } else if (task.progress < 50) {
+                        progressClass += ' low';
+                    }
+
+                    // Return custom HTML string
+                    return `
+                        <div class="custom-task-row">
+                            <div class="task-title">${task.name}</div>
+                            <div class="task-meta">
+                                <span class="${progressClass}">${task.progress}%</span>
+                                <span class="task-id">${task.id}</span>
+                            </div>
+                        </div>
+                    `;
+                }
             },
         });
 

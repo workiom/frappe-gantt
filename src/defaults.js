@@ -164,6 +164,7 @@ const DEFAULT_OPTIONS = {
         enabled: false,
         width: 200,
         header_text: 'Task Name',
+        content: null,
     },
 };
 

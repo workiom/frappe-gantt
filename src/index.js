@@ -618,9 +618,23 @@ export default class Gantt {
             // Grid rows start at header_height + index * row_height
             $row.style.top = task._index * row_height + 'px';
             $row.style.height = row_height + 'px';
-            $row.textContent = task.name;
+
+            // Use custom content function if provided, otherwise default to task name
+            if (this.options.task_column.content && typeof this.options.task_column.content === 'function') {
+                const customContent = this.options.task_column.content(task);
+
+                // Handle both string HTML and DOM elements
+                if (typeof customContent === 'string') {
+                    $row.innerHTML = customContent;
+                } else if (customContent instanceof HTMLElement) {
+                    $row.appendChild(customContent);
+                }
+            } else {
+                $row.textContent = task.name;
+                $row.title = task.name; // Tooltip for truncated names
+            }
+
             $row.setAttribute('data-task-id', task.id);
-            $row.title = task.name; // Tooltip for truncated names
         });
 
         // Set column width
