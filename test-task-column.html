@@ -202,6 +202,11 @@
                 progress: 0,
             },
             {
+                name: 'Budget approval',
+                id: 'Task 6.5',
+                progress: 60,
+            },
+            {
                 start: daysSince(11),
                 end: daysSince(14),
                 name: 'Final client review',
@@ -288,13 +293,13 @@
         ];
 
         // Create gantt charts
-        const ganttDefault = new Gantt('#gantt-default', tasks, {
+        const ganttDefault = new Gantt('#gantt-default', [...tasks], {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,
         });
 
-        let ganttWithColumn = new Gantt('#gantt-with-column', tasks, {
+        let ganttWithColumn = new Gantt('#gantt-with-column', [...tasks], {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,
@@ -307,7 +312,7 @@
 
         // Example 1: Custom content using DOM element
         // The content function receives the task object and can return a DOM element
-        const ganttCustomWidth = new Gantt('#gantt-custom-width', tasks, {
+        const ganttCustomWidth = new Gantt('#gantt-custom-width', [...tasks], {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,
@@ -346,7 +351,7 @@
 
         // Example 2: Custom content using HTML string
         // The content function can also return an HTML string for simpler use cases
-        const ganttCustomContent = new Gantt('#gantt-custom-content', tasks, {
+        const ganttCustomContent = new Gantt('#gantt-custom-content', [...tasks], {
             view_mode: 'Day',
             popup_on: 'hover',
             infinite_padding: false,

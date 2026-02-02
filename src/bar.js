@@ -190,7 +190,7 @@ export default class Bar {
         }
 
         let $date_highlight = this.gantt.create_el({
-            classes: `date-range-highlight hide highlight-${this.task.id}`,
+            classes: `date-range-highlight hide highlight-${CSS.escape(this.task.id)}`,
             width: this.width,
             left: x,
         });
@@ -498,9 +498,11 @@ export default class Bar {
                         task: this.task,
                         target: this.$bar,
                     });
-                this.gantt.$container
-                    .querySelector(`.highlight-${task_id}`)
-                    .classList.remove('hide');
+                const highlight = this.gantt.$container
+                    .querySelector(`.highlight-${CSS.escape(task_id)}`);
+                if (highlight) {
+                    highlight.classList.remove('hide');
+                }
             }, 200);
 
             // Show add task icon on hover only if not dragging
@@ -523,9 +525,11 @@ export default class Bar {
             clearTimeout(timeout);
             if (this.gantt.options.popup_on === 'hover')
                 this.gantt.popup?.hide?.();
-            this.gantt.$container
-                .querySelector(`.highlight-${task_id}`)
-                .classList.add('hide');
+            const highlight = this.gantt.$container
+                .querySelector(`.highlight-${CSS.escape(task_id)}`);
+            if (highlight) {
+                highlight.classList.add('hide');
+            }
 
             // Hide add task icon on mouse leave with delay
             if (this.$add_icon_group) {

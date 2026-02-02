@@ -171,54 +171,77 @@ export default class Gantt {
     setup_tasks(tasks) {
         this.tasks = tasks
             .map((task, i) => {
-                if (!task.start) {
-                    console.error(
-                        `task "${task.id}" doesn't have a start date`,
-                    );
-                    return false;
+                // Check if task has no dates - mark it but don't filter out
+                if (!task.start || !task.end) {
+                    if (!task.start && !task.end) {
+                        // Task has no dates - only show if task column is enabled
+                        if (!this.options.task_column?.enabled) {
+                            console.warn(
+                                `task "${task.id || task.name}" has no dates and will be hidden (task column is disabled)`
+                            );
+                            return false;
+                        }
+                        task._has_no_dates = true;
+                        // Set dummy dates to prevent errors in other code
+                        task._start = new Date();
+                        task._end = new Date();
+                        task._index = i;
+                        // Skip date validation but continue to dependency/ID processing
+                    } else {
+                        // Task has only one date - this is an error
+                        if (!task.start) {
+                            console.error(
+                                `task "${task.id}" doesn't have a start date`,
+                            );
+                            return false;
+                        }
+                        if (!task.end && !task.duration) {
+                            console.error(`task "${task.id}" doesn't have an end date`);
+                            return false;
+                        }
+                    }
                 }
 
-                task._start = date_utils.parse(task.start);
-                if (task.end === undefined && task.duration !== undefined) {
-                    task.end = task._start;
-                    let durations = task.duration.split(' ');
+                // Only parse and validate dates if task has dates
+                if (!task._has_no_dates) {
+                    task._start = date_utils.parse(task.start);
+                    if (task.end === undefined && task.duration !== undefined) {
+                        task.end = task._start;
+                        let durations = task.duration.split(' ');
 
-                    durations.forEach((tmpDuration) => {
-                        let { duration, scale } =
-                            date_utils.parse_duration(tmpDuration);
-                        task.end = date_utils.add(task.end, duration, scale);
-                    });
-                }
-                if (!task.end) {
-                    console.error(`task "${task.id}" doesn't have an end date`);
-                    return false;
-                }
-                task._end = date_utils.parse(task.end);
+                        durations.forEach((tmpDuration) => {
+                            let { duration, scale } =
+                                date_utils.parse_duration(tmpDuration);
+                            task.end = date_utils.add(task.end, duration, scale);
+                        });
+                    }
+                    task._end = date_utils.parse(task.end);
 
-                let diff = date_utils.diff(task._end, task._start, 'year');
-                if (diff < 0) {
-                    console.error(
-                        `start of task can't be after end of task: in task "${task.id}"`,
-                    );
-                    return false;
-                }
+                    let diff = date_utils.diff(task._end, task._start, 'year');
+                    if (diff < 0) {
+                        console.error(
+                            `start of task can't be after end of task: in task "${task.id}"`,
+                        );
+                        return false;
+                    }
 
-                // make task invalid if duration too large
-                if (date_utils.diff(task._end, task._start, 'year') > 10) {
-                    console.error(
-                        `the duration of task "${task.id}" is too long (above ten years)`,
-                    );
-                    return false;
-                }
+                    // make task invalid if duration too large
+                    if (date_utils.diff(task._end, task._start, 'year') > 10) {
+                        console.error(
+                            `the duration of task "${task.id}" is too long (above ten years)`,
+                        );
+                        return false;
+                    }
 
-                // cache index
-                task._index = i;
+                    // cache index
+                    task._index = i;
 
-                // if hours is not set, assume the last day is full day
-                // e.g: 2018-09-09 becomes 2018-09-09 23:59:59
-                const task_end_values = date_utils.get_date_values(task._end);
-                if (task_end_values.slice(3).every((d) => d === 0)) {
-                    task._end = date_utils.add(task._end, 24, 'hour');
+                    // if hours is not set, assume the last day is full day
+                    // e.g: 2018-09-09 becomes 2018-09-09 23:59:59
+                    const task_end_values = date_utils.get_date_values(task._end);
+                    if (task_end_values.slice(3).every((d) => d === 0)) {
+                        task._end = date_utils.add(task._end, 24, 'hour');
+                    }
                 }
 
                 // dependencies
@@ -247,7 +270,12 @@ export default class Gantt {
 
                 return task;
             })
-            .filter((t) => t);
+            .filter((t) => t)
+            .map((task, i) => {
+                // Re-index tasks after filtering to avoid gaps
+                task._index = i;
+                return task;
+            });
         this.setup_dependencies();
     }
 
@@ -1000,10 +1028,14 @@ export default class Gantt {
 
     make_bars() {
         this.bars = this.tasks.map((task) => {
+            // Skip rendering bar for tasks without dates
+            if (task._has_no_dates) {
+                return null;
+            }
             const bar = new Bar(this, task);
             this.layers.bar.appendChild(bar.group);
             return bar;
-        });
+        }).filter(bar => bar !== null);
     }
 
     make_arrows() {
@@ -1020,10 +1052,16 @@ export default class Gantt {
                 .map((task_id) => {
                     const dependency = this.get_task(task_id);
                     if (!dependency) return;
+
+                    // Skip if either task has no bar (e.g., tasks without dates)
+                    const from_bar = this.bars[dependency._index];
+                    const to_bar = this.bars[task._index];
+                    if (!from_bar || !to_bar) return;
+
                     const arrow = new Arrow(
                         this,
-                        this.bars[dependency._index], // from_task
-                        this.bars[task._index], // to_task
+                        from_bar, // from_task
+                        to_bar, // to_task
                     );
                     this.layers.arrow.appendChild(arrow.element);
                     return arrow;
@@ -1266,7 +1304,55 @@ export default class Gantt {
             this.$container,
             'click',
             '.grid-row, .grid-header, .ignored-bar, .holiday-highlight',
-            () => {
+            (e) => {
+                // Check if click is on a grid-row (not header or other elements)
+                if (e.target.classList.contains('grid-row')) {
+                    // Get the click position relative to the SVG
+                    const svg = this.$svg;
+                    const pt = svg.createSVGPoint();
+                    pt.x = e.clientX;
+                    pt.y = e.clientY;
+                    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+                    // Calculate which row was clicked
+                    const row_height = this.options.bar_height + this.options.padding;
+                    const clicked_row_index = Math.floor((svgP.y - this.config.header_height) / row_height);
+
+                    // Check if this row corresponds to a task without dates
+                    const task = this.tasks[clicked_row_index];
+                    if (task && task._has_no_dates) {
+                        // Calculate which date was clicked
+                        const x_in_units = svgP.x / this.config.column_width;
+                        const units_from_start = Math.floor(x_in_units * this.config.step);
+                        const clicked_date = date_utils.add(
+                            this.gantt_start,
+                            units_from_start,
+                            this.config.unit
+                        );
+
+                        // Set start date to clicked date and end date to 1 day after
+                        task._start = clicked_date;
+                        task._end = date_utils.add(clicked_date, 1, 'day');
+                        task.start = clicked_date;
+                        task.end = task._end;
+
+                        // Remove the _has_no_dates flag
+                        delete task._has_no_dates;
+
+                        // Refresh the view to show the new bar
+                        this.refresh(this.tasks);
+
+                        // Trigger date_change event
+                        this.trigger_event('date_change', [
+                            task,
+                            task._start,
+                            task._end
+                        ]);
+
+                        return; // Don't unselect or hide popup for this case
+                    }
+                }
+
                 this.unselect_all();
                 this.hide_popup();
             },
