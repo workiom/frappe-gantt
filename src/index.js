@@ -58,10 +58,16 @@ export default class Gantt {
             this.$svg.classList.add('gantt');
         }
 
-        // wrapper element
+        // Create wrapper for the entire gantt (contains column + container)
+        this.$wrapper = this.create_el({
+            classes: 'gantt-wrapper',
+            append_to: this.$svg.parentElement,
+        });
+
+        // wrapper element (the scrollable container)
         this.$container = this.create_el({
             classes: 'gantt-container',
-            append_to: this.$svg.parentElement,
+            append_to: this.$wrapper,
         });
 
         this.$container.appendChild(this.$svg);
@@ -106,11 +112,28 @@ export default class Gantt {
         };
         for (let name in CSS_VARIABLES) {
             let setting = this.options[CSS_VARIABLES[name]];
-            if (setting !== 'auto')
+            if (setting !== 'auto') {
+                // Set on both wrapper and container for accessibility
+                this.$wrapper.style.setProperty(
+                    '--gv-' + name,
+                    setting + 'px',
+                );
                 this.$container.style.setProperty(
                     '--gv-' + name,
                     setting + 'px',
                 );
+            }
+        }
+
+        if (this.options.task_column?.enabled) {
+            this.$wrapper.style.setProperty(
+                '--gv-task-column-width',
+                this.options.task_column.width + 'px',
+            );
+            this.$container.style.setProperty(
+                '--gv-task-column-width',
+                this.options.task_column.width + 'px',
+            );
         }
 
         this.config = {
@@ -412,6 +435,7 @@ export default class Gantt {
         this.make_grid_rows();
         this.make_grid_header();
         this.make_side_header();
+        this.make_task_column();
     }
 
     make_grid_extras() {
@@ -531,6 +555,82 @@ export default class Gantt {
             $today_button.onclick = this.scroll_current.bind(this);
             this.$side_header.prepend($today_button);
             this.$today_button = $today_button;
+        }
+    }
+
+    make_task_column() {
+        // Remove existing column if present
+        this.$task_column?.remove();
+
+        // Exit if feature not enabled
+        if (!this.options.task_column?.enabled) {
+            // Remove the wrapper class that enables column layout
+            this.$wrapper?.classList?.remove('has-task-column');
+            return;
+        }
+
+        // Add class to wrapper to enable column layout
+        this.$wrapper?.classList?.add('has-task-column');
+
+        // Create column container - append to wrapper, not container
+        this.$task_column = this.create_el({
+            classes: 'task-column',
+            append_to: this.$wrapper,
+        });
+
+        // Insert column before the gantt-container
+        this.$wrapper.insertBefore(this.$task_column, this.$container);
+
+        // Create header
+        this.$task_column_header = this.create_el({
+            classes: 'task-column-header',
+            append_to: this.$task_column,
+        });
+        this.$task_column_header.textContent =
+            this.options.task_column.header_text || 'Task Name';
+
+        // Create content container
+        this.$task_column_content = this.create_el({
+            classes: 'task-column-content',
+            append_to: this.$task_column,
+        });
+
+        // Set the content height to match the total height of all tasks
+        const row_height = this.options.bar_height + this.options.padding;
+        const total_content_height = Math.max(
+            this.tasks.length * row_height,
+            this.grid_height - this.config.header_height
+        );
+        this.$task_column_content.style.minHeight = total_content_height + 'px';
+
+        // Create rows for each task
+        this.tasks.forEach((task) => {
+            // Calculate row height (matches grid row height)
+            const row_height = this.options.bar_height + this.options.padding;
+
+            const $row = this.create_el({
+                classes: 'task-row',
+                append_to: this.$task_column_content,
+            });
+
+            // Position to align with grid rows (not bars)
+            // Grid rows start at header_height + index * row_height
+            $row.style.top = task._index * row_height + 'px';
+            $row.style.height = row_height + 'px';
+            $row.textContent = task.name;
+            $row.setAttribute('data-task-id', task.id);
+            $row.title = task.name; // Tooltip for truncated names
+        });
+
+        // Set column width
+        this.$task_column.style.width =
+            this.options.task_column.width + 'px';
+
+        // Apply RTL class if needed
+        if (this.options.isRTL) {
+            this.$wrapper?.classList?.add('rtl');
+        } else {
+            this.$wrapper?.classList?.remove('rtl');
         }
     }
 
@@ -1305,6 +1405,12 @@ export default class Gantt {
         }
 
         $.on(this.$container, 'scroll', (e) => {
+            // Sync vertical scroll with task name column using transform
+            if (this.$task_column_content) {
+                const scrollTop = e.currentTarget.scrollTop;
+                this.$task_column_content.style.transform = `translateY(-${scrollTop}px)`;
+            }
+
             let localBars = [];
             const ids = this.bars.map(({ group }) =>
                 group.getAttribute('data-id'),
@@ -1821,9 +1927,14 @@ export default class Gantt {
         this.$svg.innerHTML = '';
         this.$header?.remove?.();
         this.$side_header?.remove?.();
+        this.$task_column?.remove?.();
         this.$current_highlight?.remove?.();
         this.$extras?.remove?.();
         this.popup?.hide?.();
+
+        // Remove wrapper classes
+        this.$wrapper?.classList?.remove('has-task-column');
+        this.$wrapper?.classList?.remove('rtl');
     }
 }
 

@@ -1,12 +1,23 @@
 @import './light.css';
 
+.gantt-wrapper {
+    display: flex;
+    width: 100%;
+    position: relative;
+
+    &.rtl {
+        flex-direction: row-reverse;
+    }
+}
+
 .gantt-container {
     line-height: 14.5px;
     position: relative;
     overflow: auto;
     font-size: 12px;
     height: var(--gv-grid-height);
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     border-radius: 8px;
 
     & .popup-wrapper {
@@ -380,4 +391,67 @@
             }
         }
     }
+}
+
+/* Task Name Column */
+.task-column {
+    flex-shrink: 0;
+    width: var(--gv-task-column-width, 150px);
+    height: var(--gv-grid-height);
+    background-color: var(--g-task-column-bg);
+    border-right: 1px solid var(--g-row-border-color);
+    overflow: hidden;
+    user-select: none;
+    position: relative;
+}
+
+.task-column-header {
+    height: calc(
+        var(--gv-lower-header-height) + var(--gv-upper-header-height) + 10px
+    );
+    background-color: var(--g-header-background);
+    border-bottom: 1px solid var(--g-row-border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--g-text-dark);
+}
+
+.task-column-content {
+    position: absolute;
+    top: calc(
+        var(--gv-lower-header-height) + var(--gv-upper-header-height) + 10px
+    );
+    width: 100%;
+    height: calc(
+        100% - var(--gv-lower-header-height) - var(--gv-upper-header-height) -
+            10px
+    );
+    overflow: hidden;
+}
+
+.task-row {
+    position: absolute;
+    width: 100%;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: var(--g-text-dark);
+    border-bottom: 1px solid var(--g-row-border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: var(--g-task-row-bg);
+}
+
+/* RTL Support */
+.gantt-wrapper.rtl .task-column {
+    border-right: none;
+    border-left: 1px solid var(--g-row-border-color);
 }

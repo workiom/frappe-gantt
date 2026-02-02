@@ -94,4 +94,16 @@
             border-color: lighten(var(--g-progress-color, 5));
         }
     }
+
+    & .task-column {
+        background-color: #1a1a1a;
+    }
+
+    & .task-column-header {
+        background-color: #252525;
+    }
+
+    & .task-row {
+        background-color: #1a1a1a;
+    }
 }
