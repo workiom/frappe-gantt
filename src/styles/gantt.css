@@ -450,8 +450,37 @@
     background-color: var(--g-task-row-bg);
 }
 
+.task-column-resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 1002;
+    background-color: transparent;
+    transition: background-color 0.2s ease;
+}
+
+.task-column-resize-handle:hover {
+    background-color: rgba(59, 130, 246, 0.3);
+}
+
+.task-column.resizing .task-column-resize-handle {
+    background-color: rgba(59, 130, 246, 0.5);
+}
+
+.task-column.resizing {
+    user-select: none;
+}
+
 /* RTL Support */
 .gantt-wrapper.rtl .task-column {
     border-right: none;
     border-left: 1px solid var(--g-row-border-color);
+}
+
+.gantt-wrapper.rtl .task-column-resize-handle {
+    right: auto;
+    left: 0;
 }

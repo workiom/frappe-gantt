@@ -393,6 +393,7 @@ export default class Gantt {
         this.bind_grid_click();
         this.bind_holiday_labels();
         this.bind_bar_events();
+        this.bind_task_column_resize();
     }
 
     render() {
@@ -625,6 +626,12 @@ export default class Gantt {
         // Set column width
         this.$task_column.style.width =
             this.options.task_column.width + 'px';
+
+        // Create resize handle
+        this.$task_column_resize_handle = this.create_el({
+            classes: 'task-column-resize-handle',
+            append_to: this.$task_column,
+        });
 
         // Apply RTL class if needed
         if (this.options.isRTL) {
@@ -1599,6 +1606,74 @@ export default class Gantt {
         });
 
         this.bind_bar_progress();
+    }
+
+    bind_task_column_resize() {
+        if (!this.$task_column_resize_handle) return;
+
+        let is_resizing = false;
+        let start_x = 0;
+        let start_width = 0;
+        const min_width = 100; // Minimum column width
+        const max_width = 600; // Maximum column width
+
+        $.on(this.$task_column_resize_handle, 'mousedown', (e) => {
+            is_resizing = true;
+            start_x = e.clientX;
+            start_width = this.options.task_column.width;
+
+            // Add resizing class for visual feedback
+            this.$task_column.classList.add('resizing');
+
+            // Prevent text selection during resize
+            e.preventDefault();
+        });
+
+        $.on(document, 'mousemove', (e) => {
+            if (!is_resizing) return;
+
+            // Calculate new width based on mouse position
+            let delta = e.clientX - start_x;
+
+            // Handle RTL mode - reverse the delta
+            if (this.options.isRTL) {
+                delta = -delta;
+            }
+
+            let new_width = start_width + delta;
+
+            // Enforce min and max width constraints
+            new_width = Math.max(min_width, Math.min(max_width, new_width));
+
+            // Update the column width
+            this.options.task_column.width = new_width;
+            this.$task_column.style.width = new_width + 'px';
+
+            // Update CSS variables
+            this.$wrapper.style.setProperty(
+                '--gv-task-column-width',
+                new_width + 'px',
+            );
+            this.$container.style.setProperty(
+                '--gv-task-column-width',
+                new_width + 'px',
+            );
+
+            // Trigger resize event during drag
+            this.trigger_event('task_column_resize', [new_width]);
+        });
+
+        $.on(document, 'mouseup', () => {
+            if (!is_resizing) return;
+
+            is_resizing = false;
+
+            // Remove resizing class
+            this.$task_column.classList.remove('resizing');
+
+            // Trigger resize complete event
+            this.trigger_event('task_column_resized', [this.options.task_column.width]);
+        });
     }
 
     bind_bar_progress() {
