@@ -318,6 +318,9 @@
                 width: 200,
                 header_text: 'Task Name',
             },
+            on_task_after_column_resize: (newWidth) => {
+                alert(`Task column resized to: ${newWidth}px`);
+            },
         });
 
         // Example 1: Custom content using DOM element
@@ -357,6 +360,9 @@
                     return container;
                 }
             },
+            on_task_after_column_resize: (newWidth) => {
+                alert(`Task column resized to: ${newWidth}px`);
+            },
         });
 
         // Example 2: Custom content using HTML string
@@ -389,6 +395,9 @@
                         </div>
                     `;
                 }
+            },
+            on_task_after_column_resize: (newWidth) => {
+                alert(`Task column resized to: ${newWidth}px`);
             },
         });
 
@@ -495,6 +504,9 @@
                         </div>
                     `;
                 }
+            },
+            on_task_after_column_resize: (newWidth) => {
+                alert(`Task column resized to: ${newWidth}px`);
             },
             on_date_change: (task, start, end) => {
                 alert(`[on_date_change]\nTask "${task.name}" dates assigned!\nStart: ${start.toLocaleDateString()}\nEnd: ${end.toLocaleDateString()}`);
