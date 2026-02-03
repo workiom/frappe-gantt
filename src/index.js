@@ -1794,7 +1794,7 @@ export default class Gantt {
             this.$task_column.classList.remove('resizing');
 
             // Trigger resize complete event
-            this.trigger_event('task_column_resized', [this.options.task_column.width]);
+            this.trigger_event('task_after_column_resize', [this.options.task_column.width]);
         });
     }
 
