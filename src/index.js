@@ -633,6 +633,16 @@ export default class Gantt {
         );
         this.$task_column_content.style.minHeight = total_content_height + 'px';
 
+        // Set CSS variable for resize handle height
+        this.$wrapper.style.setProperty(
+            '--gv-task-column-content-height',
+            total_content_height + 'px',
+        );
+        this.$container.style.setProperty(
+            '--gv-task-column-content-height',
+            total_content_height + 'px',
+        );
+
         // Create rows for each task
         this.tasks.forEach((task) => {
             // Calculate row height (matches grid row height)
