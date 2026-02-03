@@ -238,10 +238,13 @@ export default class Bar {
             x_coord = this.x + this.image_size + 5;
         }
 
+        // Hide text label when task_column is enabled
+        const labelText = this.gantt.options.task_column.enabled ? '' : this.task.name;
+
         this.$bar_label = createSVG('text', {
             x: x_coord,
             y: this.y + this.height / 2,
-            innerHTML: this.task.name,
+            innerHTML: labelText,
             class: 'bar-label',
             append_to: this.bar_group,
         });
