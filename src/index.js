@@ -289,9 +289,9 @@ export default class Gantt {
         }
     }
 
-    refresh(tasks) {
+    refresh(tasks, skipScroll = false) {
         this.setup_tasks(tasks);
-        this.change_view_mode();
+        this.change_view_mode(this.options.view_mode, skipScroll);
     }
 
     update_task(id, new_details) {
@@ -1351,8 +1351,8 @@ export default class Gantt {
                         // Remove the _has_no_dates flag
                         delete task._has_no_dates;
 
-                        // Refresh the view to show the new bar
-                        this.refresh(this.tasks);
+                        // Refresh the view to show the new bar (skipScroll = true to maintain current position)
+                        this.refresh(this.tasks, true);
 
                         // Trigger date_change event
                         this.trigger_event('date_change', [
