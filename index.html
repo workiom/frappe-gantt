@@ -447,7 +447,7 @@
                     start: daysSince(-2),
                     end: daysSince(2),
                     name: 'Redesign website',
-                    id: 'Task 0',
+                    id: 'Task0',
                     progress: random(),
                     color,
                     color_text,
@@ -457,10 +457,10 @@
                     start: daysSince(3),
                     duration: '6d',
                     name: 'Write new content',
-                    id: 'Task 1',
+                    id: 'Task1',
                     progress: random(),
                     important: true,
-                    dependencies: 'Task 0',
+                    dependencies: 'Task0',
                     color,
                     color_text,
                     color_progress,
@@ -469,9 +469,9 @@
                     start: daysSince(4),
                     duration: '2d',
                     name: 'Apply new styles',
-                    id: 'Task 2',
+                    id: 'Task2',
                     progress: random(),
-                    dependencies: 'Task 0, Task 1',
+                    dependencies: ['Task0', 'Task1'],
                     color,
                     color_text,
                     color_progress,
@@ -480,7 +480,7 @@
                     start: daysSince(-4),
                     end: daysSince(0),
                     name: 'Review',
-                    id: 'Task 3',
+                    id: 'Task3',
                     progress: random(),
                     color,
                     color_text,
@@ -718,10 +718,17 @@
             // Add event listener for update task button
             document.getElementById('update-task-btn').addEventListener('click', () => {
                 tasks.forEach((task) => {
-                    mutablity.update_task(task.id, {
+                    const updateData = {
                         name: task.name + ` | Edited`,
                         progress: random()
-                    });
+                    };
+
+                    // Update "Apply new styles" task to depend only on "Review"
+                    if (task.id === 'Task2') {
+                        updateData.dependencies = ['Task3'];
+                    }
+
+                    mutablity.update_task(task.id, updateData);
                 });
             });
             const sideheader = new Gantt('#sideheader', tasksSpread, {

@@ -297,7 +297,35 @@ export default class Gantt {
     update_task(id, new_details) {
         let task = this.tasks.find((t) => t.id === id);
         let bar = this.bars[task._index];
+
+        // Check if dependencies are being updated
+        const dependenciesChanged = new_details.dependencies !== undefined;
+
         Object.assign(task, new_details);
+
+        // If dependencies changed, rebuild arrows
+        if (dependenciesChanged) {
+            // Ensure dependencies is an array
+            if (typeof task.dependencies === 'string') {
+                task.dependencies = task.dependencies
+                    .split(',')
+                    .map((d) => d.trim())
+                    .filter((d) => d);
+            }
+
+            // Rebuild dependency map
+            this.setup_dependencies();
+
+            // Clear existing arrows from the DOM
+            this.layers.arrow.innerHTML = '';
+
+            // Recreate all arrows
+            this.make_arrows();
+
+            // Remap arrows on bars
+            this.map_arrows_on_bars();
+        }
+
         bar.refresh();
     }
 
