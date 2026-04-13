@@ -45,5 +45,5 @@ This is an SVG-based Gantt chart library. Entry point is `src/index.js` which ex
 - View modes are objects with rendering config; users can pass custom view mode objects or predefined name strings.
 - Tasks have `dependencies` as an array of `{ id, type? }` objects (e.g. `[{ id: 'task_1', type: 'finish-to-start' }]`). After normalization in `setup_tasks`, each entry's `id` has spaces replaced with `_`. If `type` is absent, `options.dependencies_type` is used as fallback at arrow-creation time.
 - `gantt.tasks` is a proxy-like object with `.append()`, `.refresh()`, etc. for dynamic updates.
-- The `dependencies_type` option sets the default relationship type for dependency arrows (`fixed`, `finish-to-start`, `start-to-start`, `finish-to-finish`, `start-to-finish`). Each arrow independently turns red when its constraint is violated. Dragging is always free — no auto-shifting of dependents.
+- The `dependencies_type` option sets the default relationship type for dependency arrows (`finish-to-start`, `start-to-start`, `finish-to-finish`, `start-to-finish`). Each arrow independently turns red when its constraint is violated. Dragging is always free — no auto-shifting of dependents. `Arrow` receives the resolved type as a constructor arg (`dependency_type`).
 - RTL support is handled via `isRTL` option which flips layout direction.
