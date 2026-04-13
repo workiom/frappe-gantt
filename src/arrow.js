@@ -1,10 +1,11 @@
 import { createSVG } from './svg_utils';
 
 export default class Arrow {
-    constructor(gantt, from_task, to_task) {
+    constructor(gantt, from_task, to_task, dependency_type) {
         this.gantt = gantt;
         this.from_task = from_task;
         this.to_task = to_task;
+        this.dependency_type = dependency_type;
         this.is_critical = this.check_critical_path();
         this.is_invalid = this.check_invalid_dependency();
 
@@ -21,18 +22,11 @@ export default class Arrow {
     }
 
     check_invalid_dependency() {
-        const dependencies_type = this.to_task.task.dependencies_type ||
-                                  this.gantt.options.dependencies_type;
-
-        // Fixed dependencies use old logic
-        if (dependencies_type === 'fixed') {
-            return this.to_task.$bar.getX() < this.from_task.$bar.getX();
-        }
-
+        const dependency_type = this.dependency_type;
         const parent_task = this.from_task.task;
         const child_task = this.to_task.task;
 
-        switch(dependencies_type) {
+        switch(dependency_type) {
             case 'finish-to-start':
                 // Child task cannot start before parent finishes
                 return child_task._start < parent_task._end;

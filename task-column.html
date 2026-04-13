@@ -172,7 +172,7 @@
                 name: 'Develop wireframe',
                 id: 'Task 1',
                 progress: 75,
-                dependencies: 'Task 0',
+                dependencies: [{ id: 'Task 0' }],
             },
             {
                 start: daysSince(0),
@@ -186,14 +186,14 @@
                 duration: '7d',
                 name: 'Create prototype',
                 id: 'Task 3',
-                dependencies: 'Task 2',
+                dependencies: [{ id: 'Task 2' }],
                 progress: 30,
             },
             {
                 start: daysSince(4),
                 duration: '5d',
                 name: 'Test design with users',
-                dependencies: 'Task 2',
+                dependencies: [{ id: 'Task 2' }],
                 id: 'Task 4',
                 progress: 10,
             },
@@ -228,7 +228,7 @@
                 duration: '6d',
                 name: 'Implement feedback',
                 id: 'Task 9',
-                dependencies: 'Task 8',
+                dependencies: [{ id: 'Task 8' }],
                 progress: 0,
             },
             {
@@ -243,7 +243,7 @@
                 duration: '3d',
                 name: 'Bug fixes and refinements',
                 id: 'Task 11',
-                dependencies: 'Task 10',
+                dependencies: [{ id: 'Task 10' }],
                 progress: 0,
             },
             {
@@ -265,7 +265,7 @@
                 duration: '4d',
                 name: 'User acceptance testing',
                 id: 'Task 14',
-                dependencies: 'Task 11',
+                dependencies: [{ id: 'Task 11' }],
                 progress: 0,
             },
             {
@@ -273,7 +273,7 @@
                 duration: '3d',
                 name: 'Deploy to staging',
                 id: 'Task 15',
-                dependencies: 'Task 13,Task 14',
+                dependencies: [{ id: 'Task 13' }, { id: 'Task 14' }],
                 progress: 0,
             },
             {
@@ -281,7 +281,7 @@
                 duration: '2d',
                 name: 'Staging environment tests',
                 id: 'Task 16',
-                dependencies: 'Task 15',
+                dependencies: [{ id: 'Task 15' }],
                 progress: 0,
             },
             {
@@ -289,7 +289,7 @@
                 duration: '1d',
                 name: 'Production deployment',
                 id: 'Task 17',
-                dependencies: 'Task 16',
+                dependencies: [{ id: 'Task 16' }],
                 progress: 0,
             },
             {
@@ -297,7 +297,7 @@
                 duration: '3d',
                 name: 'Post-launch monitoring',
                 id: 'Task 18',
-                dependencies: 'Task 17',
+                dependencies: [{ id: 'Task 17' }],
                 progress: 0,
             },
         ];

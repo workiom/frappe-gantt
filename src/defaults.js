@@ -116,7 +116,7 @@ const DEFAULT_OPTIONS = {
     column_width: null,
     critical_path: false,
     date_format: 'YYYY-MM-DD HH:mm',
-    dependencies_type: 'fixed',
+    dependencies_type: 'finish-to-start',
     upper_header_height: 45,
     lower_header_height: 30,
     snap_at: null,
@@ -126,7 +126,6 @@ const DEFAULT_OPTIONS = {
     isRTL: false,
     language: 'en',
     lines: 'both',
-    move_dependencies: true,
     padding: 18,
     popup: (ctx) => {
         ctx.set_title(ctx.task.name);

@@ -194,18 +194,6 @@
                             class="form-check-input"
                             type="radio"
                             name="dep-type"
-                            id="dep-fixed"
-                            value="fixed"
-                        />
-                        <label class="form-check-label" for="dep-fixed">
-                            ثابت (التحرك معًا)
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input
-                            class="form-check-input"
-                            type="radio"
-                            name="dep-type"
                             id="dep-fs"
                             value="finish-to-start"
                             checked
@@ -236,6 +224,18 @@
                         />
                         <label class="form-check-label" for="dep-ff">
                             من النهاية إلى النهاية
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-type"
+                            id="dep-sf"
+                            value="start-to-finish"
+                        />
+                        <label class="form-check-label" for="dep-sf">
+                            من البداية إلى النهاية
                         </label>
                     </div>
                 </div>
@@ -453,7 +453,7 @@
                     id: 'Task 1',
                     progress: random(),
                     important: true,
-                    dependencies: 'Task 0',
+                    dependencies: [{ id: 'Task 0' }],
                     color,
                     color_text,
                     color_progress,
@@ -526,7 +526,7 @@
                     name: 'كتابة محتوى جديد',
                     id: 'Task 1',
                     progress: random(),
-                    dependencies: 'Task 0',
+                    dependencies: [{ id: 'Task 0' }],
                     important: true,
                 },
                 {
@@ -559,7 +559,7 @@
                     name: 'تخطيط',
                     id: 'Child 1.1',
                     progress: random(),
-                    dependencies: 'Parent 1',
+                    dependencies: [{ id: 'Parent 1' }],
                 },
                 // Second child
                 {
@@ -568,7 +568,7 @@
                     name: 'تطوير',
                     id: 'Child 1.2',
                     progress: random(),
-                    dependencies: 'Child 1.1',
+                    dependencies: [{ id: 'Child 1.1' }],
                 },
                 // Third child with sub-children
                 {
@@ -577,7 +577,7 @@
                     name: 'اختبار',
                     id: 'Child 1.3',
                     progress: random(),
-                    dependencies: 'Child 1.2',
+                    dependencies: [{ id: 'Child 1.2' }],
                 },
                 // First sub-child of third child
                 {
@@ -586,7 +586,7 @@
                     name: 'اختبار الوحدات',
                     id: 'SubChild 1.3.1',
                     progress: random(),
-                    dependencies: 'Child 1.3',
+                    dependencies: [{ id: 'Child 1.3' }],
                 },
                 // Second sub-child of third child
                 {
@@ -595,7 +595,7 @@
                     name: 'اختبار التكامل',
                     id: 'SubChild 1.3.2',
                     progress: random(),
-                    dependencies: 'Child 1.3',
+                    dependencies: [{ id: 'Child 1.3' }],
                 },
             ];
             let tasksMany = [
@@ -612,7 +612,7 @@
                     name: 'تطوير إطار السلكي',
                     id: 'Task 1',
                     progress: random(),
-                    dependencies: 'Task 0',
+                    dependencies: [{ id: 'Task 0' }],
                 },
                 {
                     start: daysSince(-1),
@@ -627,14 +627,14 @@
                     duration: '7d',
                     name: 'إنشاء نموذج أولي',
                     id: 'Task 3',
-                    dependencies: 'Task 2',
+                    dependencies: [{ id: 'Task 2' }],
                     progress: random(),
                 },
                 {
                     start: daysSince(3),
                     duration: '5d',
                     name: 'اختبار التصميم مع المستخدمين',
-                    dependencies: 'Task 2',
+                    dependencies: [{ id: 'Task 2' }],
                     id: 'Task 4',
                     progress: random(),
                     important: true,
@@ -760,7 +760,7 @@
                     name: 'تطوير',
                     id: 'Task 1',
                     progress: random(),
-                    dependencies: 'Task 0',
+                    dependencies: [{ id: 'Task 0' }],
                 },
                 {
                     start: daysSince(1),
@@ -768,7 +768,7 @@
                     name: 'توثيق',
                     id: 'Task 2',
                     progress: random(),
-                    dependencies: 'Task 0',
+                    dependencies: [{ id: 'Task 0' }],
                 },
                 {
                     start: daysSince(8),
@@ -776,7 +776,7 @@
                     name: 'اختبار',
                     id: 'Task 3',
                     progress: random(),
-                    dependencies: 'Task 1',
+                    dependencies: [{ id: 'Task 1' }],
                 },
                 {
                     start: daysSince(13),
@@ -784,7 +784,7 @@
                     name: 'نشر',
                     id: 'Task 4',
                     progress: random(),
-                    dependencies: 'Task 3',
+                    dependencies: [{ id: 'Task 3' }],
                 },
             ];
 
