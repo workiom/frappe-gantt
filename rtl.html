@@ -242,6 +242,65 @@
             </div>
             <div class="row my-5">
                 <div class="col-md-3 px-5 py-1">
+                    <h3 class="text-center">إزاحة تواريخ التبعيات</h3>
+                    <p>
+                        تحكم في كيفية استجابة المهام التابعة عند سحب شريط. اسحب أي مهمة وراقب كيف تتحرك الأخرى.
+                    </p>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-shifting"
+                            id="shift-none"
+                            value="none"
+                            checked
+                        />
+                        <label class="form-check-label" for="shift-none">
+                            لا شيء — تجاهل المخزن الزمني
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-shifting"
+                            id="shift-all"
+                            value="maintain_buffer_all"
+                        />
+                        <label class="form-check-label" for="shift-all">
+                            الحفاظ على المخزن — جميع المهام
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-shifting"
+                            id="shift-downstream"
+                            value="maintain_buffer_downstream"
+                        />
+                        <label class="form-check-label" for="shift-downstream">
+                            الحفاظ على المخزن — المهام اللاحقة فقط
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-shifting"
+                            id="shift-consume"
+                            value="consume_buffer"
+                        />
+                        <label class="form-check-label" for="shift-consume">
+                            استهلاك المخزن الزمني
+                        </label>
+                    </div>
+                </div>
+                <div class="chart col-md-9" id="dep-shifting"></div>
+            </div>
+
+            <div class="row my-5">
+                <div class="col-md-3 px-5 py-1">
                     <h3 class="text-center">المسار الحرج</h3>
                     <p>
                         قم بتمييز المهام الحرجة في مشروعك بأسهم حمراء.
@@ -744,6 +803,59 @@
                 dependencies_type: 'finish-to-start',
                 holidays: null,
                 scroll_to: daysSince(-5),
+            });
+
+            const tasksShifting = [
+                {
+                    start: daysSince(-4),
+                    end: daysSince(0),
+                    name: 'تصميم',
+                    id: 'S0',
+                    progress: random(),
+                },
+                {
+                    start: daysSince(2),
+                    duration: '5d',
+                    name: 'تطوير',
+                    id: 'S1',
+                    progress: random(),
+                    dependencies: [{ id: 'S0', type: 'finish-to-start' }],
+                },
+                {
+                    start: daysSince(9),
+                    duration: '4d',
+                    name: 'اختبار',
+                    id: 'S2',
+                    progress: random(),
+                    dependencies: [{ id: 'S1', type: 'finish-to-start' }],
+                },
+                {
+                    start: daysSince(15),
+                    duration: '3d',
+                    name: 'نشر',
+                    id: 'S3',
+                    progress: random(),
+                    dependencies: [{ id: 'S2', type: 'finish-to-start' }],
+                },
+            ];
+
+            const depShifting = new Gantt('#dep-shifting', tasksShifting, {
+                ...defaultOptions,
+                dependency_shifting: 'none',
+                holidays: null,
+                popup_on: null,
+                scroll_to: daysSince(-5),
+            });
+
+            document.querySelectorAll('input[name="dep-shifting"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    depShifting.update_options({
+                        dependency_shifting: e.target.value,
+                        scroll_to: null,
+                    });
+                    const scroll = depShifting.$container.scrollLeft;
+                    depShifting.$container.scrollLeft = scroll;
+                });
             });
 
             const tasksCriticalPath = [

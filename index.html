@@ -249,6 +249,65 @@
             </div>
             <div class="row my-5">
                 <div class="col-md-3 px-5 py-1">
+                    <h3 class="text-center">Dependency Date Shifting</h3>
+                    <p>
+                        Control how dependent tasks respond when a bar is dragged. Drag any task and watch how others shift.
+                    </p>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-shifting"
+                            id="shift-none"
+                            value="none"
+                            checked
+                        />
+                        <label class="form-check-label" for="shift-none">
+                            None — Ignore Buffer
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-shifting"
+                            id="shift-all"
+                            value="maintain_buffer_all"
+                        />
+                        <label class="form-check-label" for="shift-all">
+                            Maintain Buffer — All Tasks
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-shifting"
+                            id="shift-downstream"
+                            value="maintain_buffer_downstream"
+                        />
+                        <label class="form-check-label" for="shift-downstream">
+                            Maintain Buffer — Downstream Only
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            name="dep-shifting"
+                            id="shift-consume"
+                            value="consume_buffer"
+                        />
+                        <label class="form-check-label" for="shift-consume">
+                            Consume Buffer
+                        </label>
+                    </div>
+                </div>
+                <div class="chart col-md-9" id="dep-shifting"></div>
+            </div>
+
+            <div class="row my-5">
+                <div class="col-md-3 px-5 py-1">
                     <h3 class="text-center">Critical Path</h3>
                     <p>
                         Highlight the critical tasks in your project with red arrows.
@@ -755,6 +814,58 @@
                 holidays: null,
                 popup_on: null,
                 scroll_to: daysSince(-5),
+            });
+
+            const tasksShifting = [
+                {
+                    start: daysSince(-4),
+                    end: daysSince(0),
+                    name: 'Design',
+                    id: 'S0',
+                    progress: random(),
+                },
+                {
+                    start: daysSince(2),
+                    duration: '5d',
+                    name: 'Development',
+                    id: 'S1',
+                    progress: random(),
+                    dependencies: [{ id: 'S0', type: 'finish-to-start' }],
+                },
+                {
+                    start: daysSince(9),
+                    duration: '4d',
+                    name: 'Testing',
+                    id: 'S2',
+                    progress: random(),
+                    dependencies: [{ id: 'S1', type: 'finish-to-start' }],
+                },
+                {
+                    start: daysSince(15),
+                    duration: '3d',
+                    name: 'Deployment',
+                    id: 'S3',
+                    progress: random(),
+                    dependencies: [{ id: 'S2', type: 'finish-to-start' }],
+                },
+            ];
+
+            const depShifting = new Gantt('#dep-shifting', tasksShifting, {
+                dependency_shifting: 'none',
+                holidays: null,
+                popup_on: null,
+                scroll_to: daysSince(-5),
+            });
+
+            document.querySelectorAll('input[name="dep-shifting"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    depShifting.update_options({
+                        dependency_shifting: e.target.value,
+                        scroll_to: null,
+                    });
+                    const scroll = depShifting.$container.scrollLeft;
+                    depShifting.$container.scrollLeft = scroll;
+                });
             });
 
             const tasksCriticalPath = [

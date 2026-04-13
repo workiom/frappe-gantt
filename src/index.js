@@ -1,5 +1,6 @@
 import date_utils from './date_utils';
 import { $, createSVG } from './svg_utils';
+import { compute_dependency_shifts } from './dependency_shifting';
 
 import Arrow from './arrow';
 import Bar from './bar';
@@ -1715,12 +1716,60 @@ export default class Gantt {
                 this.update_arrow_critical_path();
             }
 
+            // Apply dependency shifting
+            if (tasks_changed.length > 0 && this.options.dependency_shifting !== 'none') {
+                tasks_changed.forEach(({ task }) => {
+                    const dragged_bar = bars.find((b) => b.task.id === task.id);
+                    if (!dragged_bar || !dragged_bar.$bar.finaldx) return;
+
+                    const units_moved = dragged_bar.$bar.finaldx / this.config.column_width;
+                    const ms_per_unit =
+                        this.config.unit === 'hour'  ? 3600000 :
+                        this.config.unit === 'day'   ? 86400000 :
+                        this.config.unit === 'month' ? 30 * 86400000 :
+                        this.config.unit === 'year'  ? 365 * 86400000 : 86400000;
+                    const deltaMs = units_moved * this.config.step * ms_per_unit;
+
+                    const shift_map = compute_dependency_shifts(
+                        this.tasks,
+                        task.id,
+                        deltaMs,
+                        this.options.dependency_shifting,
+                    );
+
+                    shift_map.forEach((shiftMs, taskId) => {
+                        const affected_bar = this.get_bar(taskId);
+                        if (!affected_bar) return;
+
+                        const affected_task = affected_bar.task;
+                        const new_start = new Date(affected_task._start.getTime() + shiftMs);
+                        const new_x =
+                            (date_utils.diff(new_start, this.gantt_start, this.config.unit) /
+                                this.config.step) *
+                            this.config.column_width;
+
+                        affected_bar.update_bar_position({ x: new_x });
+                        affected_bar.update_arrow_position();
+
+                        this.trigger_event('after_date_change', [
+                            affected_task,
+                            affected_task._start,
+                            date_utils.add(affected_task._end, -1, 'second'),
+                        ]);
+                    });
+                });
+            }
+
             // Trigger on_after_date_change for all tasks that changed
             if (tasks_changed.length > 0) {
                 tasks_changed.forEach(({task, start, end}) => {
                     this.trigger_event('after_date_change', [task, start, end]);
                 });
             }
+
+            // Reset finaldx so subsequent mouseup events (e.g. from scrolling)
+            // don't re-trigger date changes or dependency shifting
+            bars.forEach((bar) => { bar.$bar.finaldx = 0; });
 
             // Reset drag flags after handling callbacks
             is_dragging = false;

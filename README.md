@@ -87,6 +87,7 @@ Frappe Gantt offers a wide range of options to customize your chart.
 | `critical_path`          | Automatically calculate and highlight the critical path.      | `true`, `false`                                                                                                                                                               | `false`                                             |
 | `date_format`            | Format for displaying dates.                                  | Any valid JS date format string.                                                                                                                                              | `YYYY-MM-DD`                                        |
 | `dependencies_type`      | Sets the default relationship type used to validate each arrow (turns it red on violation). Dragging is always free. | `finish-to-start`, `start-to-start`, `finish-to-finish`, `start-to-finish`                                                                                                    | `finish-to-start`                                   |
+| `dependency_shifting`    | Controls how dependent tasks shift after a bar is dropped. See Dependency Shifting section below.                    | `none`, `maintain_buffer_all`, `maintain_buffer_downstream`, `consume_buffer`                                                                                                 | `none`                                              |
 | `upper_header_height`    | Height of the upper header in the timeline (in pixels).       | Any positive integer.                                                                                                                                                         | `45`                                                |
 | `lower_header_height`    | Height of the lower header in the timeline (in pixels).       | Any positive integer.                                                                                                                                                         | `30`                                                |
 | `snap_at`                | Snap tasks at particular intervel while resizing or dragging. | Any _interval_ (see below)                                                                                                                                                    | `1d`                                                |
@@ -165,6 +166,41 @@ let tasks = [
 - When a dependency constraint is violated, the arrow turns red
 - Each arrow is validated independently based on its own `type`
 - Constraints respect ignored dates/weekends
+
+#### Dependency Shifting Configuration
+
+The `dependency_shifting` option controls how dependent tasks respond when a bar is dragged and released.
+
+**Available Modes:**
+
+- **`none`** (default): No shifting. Dependency arrows may visually overlap — no correction is applied.
+
+- **`maintain_buffer_all`**: When any task moves, every task in the chain (both upstream and downstream) shifts by the same number of days. All gaps between tasks are preserved exactly.
+
+- **`maintain_buffer_downstream`**: When a task moves, only downstream tasks shift by the same delta. Tasks before it in the chain stay fixed.
+
+- **`consume_buffer`**: Dependency-type-aware shifting. A shift only happens when a real conflict exists — the buffer is consumed first. If no conflict exists, nothing changes. If a conflict exists, only the minimum shift needed to resolve it is applied. Works in both directions.
+
+  Conflict conditions per dependency type:
+  | Type | Conflict when |
+  |---|---|
+  | `finish-to-start` | predecessor end > successor start |
+  | `start-to-start` | predecessor start > successor start |
+  | `finish-to-finish` | predecessor end > successor end |
+  | `start-to-finish` | predecessor start > successor end |
+
+**Usage:**
+
+```js
+let gantt = new Gantt("#gantt", tasks, {
+    dependency_shifting: 'consume_buffer'
+});
+```
+
+**Behavior notes:**
+- Shifting fires after drag release (mouseup), not during live dragging
+- When a task has multiple predecessors, the maximum required shift is applied (ensures all constraints are satisfied)
+- Cycles in the dependency graph are safely skipped
 
 #### View Mode Configuration
 

@@ -117,6 +117,7 @@ const DEFAULT_OPTIONS = {
     critical_path: false,
     date_format: 'YYYY-MM-DD HH:mm',
     dependencies_type: 'finish-to-start',
+    dependency_shifting: 'none', // 'none' | 'maintain_buffer_all' | 'maintain_buffer_downstream' | 'consume_buffer'
     upper_header_height: 45,
     lower_header_height: 30,
     snap_at: null,
