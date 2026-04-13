@@ -1102,6 +1102,7 @@ export default class Gantt {
                         resolved_type,
                     );
                     this.layers.arrow.appendChild(arrow.element);
+                    this.layers.arrow.appendChild(arrow.hit_element);
                     return arrow;
                 })
                 .filter(Boolean); // filter falsy values

@@ -8,6 +8,7 @@ export default class Arrow {
         this.dependency_type = dependency_type;
         this.is_critical = this.check_critical_path();
         this.is_invalid = this.check_invalid_dependency();
+        this.is_hovered = false;
 
         this.calculate_path();
         this.draw();
@@ -48,81 +49,139 @@ export default class Arrow {
     }
 
     calculate_path() {
-        let start_x =
-            this.from_task.$bar.getX() + this.from_task.$bar.getWidth() / 2;
+        const opt = this.gantt.options;
+        const cfg = this.gantt.config;
+        const curve = opt.arrow_curve;
+        const padding = opt.padding;
 
-        const condition = () =>
-            this.to_task.$bar.getX() < start_x + this.gantt.options.padding &&
-            start_x > this.from_task.$bar.getX() + this.gantt.options.padding;
+        // Anchor x positions
+        const right_A = this.from_task.$bar.getX() + this.from_task.$bar.getWidth();
+        const left_A  = this.from_task.$bar.getX();
+        const right_B = this.to_task.$bar.getX() + this.to_task.$bar.getWidth();
+        const left_B  = this.to_task.$bar.getX();
 
-        while (condition()) {
-            start_x -= 10;
+        // Anchor y positions — vertical center of each bar row
+        const row_center = (task) =>
+            cfg.header_height +
+            opt.bar_height / 2 +
+            (opt.padding + opt.bar_height) * task.task._index +
+            opt.padding / 2;
+
+        const y_A = row_center(this.from_task);
+        const y_B = row_center(this.to_task);
+        const y_mid = (y_A + y_B) / 2;
+
+        switch (this.dependency_type) {
+            case 'finish-to-start':
+                this.path = this._path_finish_to_start(
+                    right_A, left_A, right_B, left_B, y_A, y_B, y_mid, padding, curve
+                );
+                break;
+            case 'start-to-start':
+                this.path = this._path_start_to_start(
+                    left_A, left_B, y_A, y_B, padding, curve
+                );
+                break;
+            case 'finish-to-finish':
+                this.path = this._path_finish_to_finish(
+                    right_A, right_B, y_A, y_B, padding, curve
+                );
+                break;
+            case 'start-to-finish':
+                this.path = this._path_start_to_finish(
+                    left_A, right_B, y_A, y_B, y_mid, padding, curve
+                );
+                break;
+            default:
+                this.path = this._path_finish_to_start(
+                    right_A, left_A, right_B, left_B, y_A, y_B, y_mid, padding, curve
+                );
         }
-        start_x -= 10;
+    }
 
-        let start_y =
-            this.gantt.config.header_height +
-            this.gantt.options.bar_height +
-            (this.gantt.options.padding + this.gantt.options.bar_height) *
-                this.from_task.task._index +
-            this.gantt.options.padding / 2;
+    _path_finish_to_start(right_A, left_A, right_B, left_B, y_A, y_B, y_mid, padding, curve) {
+        const x_right = right_A + padding;
 
-        let end_x = this.to_task.$bar.getX() - 13;
-        let end_y =
-            this.gantt.config.header_height +
-            this.gantt.options.bar_height / 2 +
-            (this.gantt.options.padding + this.gantt.options.bar_height) *
-                this.to_task.task._index +
-            this.gantt.options.padding / 2;
-
-        const from_is_below_to =
-            this.from_task.task._index > this.to_task.task._index;
-
-        let curve = this.gantt.options.arrow_curve;
-        const clockwise = from_is_below_to ? 1 : 0;
-        let curve_y = from_is_below_to ? -curve : curve;
-
-        if (
-            this.to_task.$bar.getX() <=
-            this.from_task.$bar.getX() + this.gantt.options.padding
-        ) {
-            let down_1 = this.gantt.options.padding / 2 - curve;
-            if (down_1 < 0) {
-                down_1 = 0;
-                curve = this.gantt.options.padding / 2;
-                curve_y = from_is_below_to ? -curve : curve;
-            }
-            const down_2 =
-                this.to_task.$bar.getY() +
-                this.to_task.$bar.getHeight() / 2 -
-                curve_y;
-            const left = this.to_task.$bar.getX() - this.gantt.options.padding;
-            this.path = `
-                M ${start_x} ${start_y}
-                v ${down_1}
-                a ${curve} ${curve} 0 0 1 ${-curve} ${curve}
-                H ${left}
-                a ${curve} ${curve} 0 0 ${clockwise} ${-curve} ${curve_y}
-                V ${down_2}
-                a ${curve} ${curve} 0 0 ${clockwise} ${curve} ${curve_y}
-                L ${end_x} ${end_y}
-                m -5 -5
-                l 5 5
-                l -5 5`;
-        } else {
-            if (end_x < start_x + curve) curve = end_x - start_x;
-
-            let offset = from_is_below_to ? end_y + curve : end_y - curve;
-
-            this.path = `
-              M ${start_x} ${start_y}
-              V ${offset}
-              a ${curve} ${curve} 0 0 ${clockwise} ${curve} ${curve}
-              L ${end_x} ${end_y}
-              m -5 -5
-              l 5 5
-              l -5 5`;
+        if (x_right < left_B) {
+            // Case 1: space between tasks — 3 segments: right, down, right
+            return `
+                M ${right_A} ${y_A}
+                H ${x_right - curve}
+                a ${curve} ${curve} 0 0 1 ${curve} ${curve}
+                V ${y_B - curve}
+                a ${curve} ${curve} 0 0 0 ${curve} ${curve}
+                H ${left_B}
+                m -5 -5 l 5 5 l -5 5`;
         }
+
+        // Case 2: overlap — 5 segments: right, down, left, down, right
+        const x_left = left_B - padding;
+        return `
+            M ${right_A} ${y_A}
+            H ${x_right - curve}
+            a ${curve} ${curve} 0 0 1 ${curve} ${curve}
+            V ${y_mid - curve}
+            a ${curve} ${curve} 0 0 1 ${-curve} ${curve}
+            H ${x_left + curve}
+            a ${curve} ${curve} 0 0 0 ${-curve} ${curve}
+            V ${y_B - curve}
+            a ${curve} ${curve} 0 0 0 ${curve} ${curve}
+            H ${left_B}
+            m -5 -5 l 5 5 l -5 5`;
+    }
+
+    _path_start_to_start(left_A, left_B, y_A, y_B, padding, curve) {
+        const x_left = Math.min(left_A, left_B) - padding;
+
+        return `
+            M ${left_A} ${y_A}
+            H ${x_left + curve}
+            a ${curve} ${curve} 0 0 0 ${-curve} ${curve}
+            V ${y_B - curve}
+            a ${curve} ${curve} 0 0 0 ${curve} ${curve}
+            H ${left_B}
+            m -5 -5 l 5 5 l -5 5`;
+    }
+
+    _path_finish_to_finish(right_A, right_B, y_A, y_B, padding, curve) {
+        const x_right = Math.max(right_A, right_B) + padding;
+
+        return `
+            M ${right_A} ${y_A}
+            H ${x_right - curve}
+            a ${curve} ${curve} 0 0 1 ${curve} ${curve}
+            V ${y_B - curve}
+            a ${curve} ${curve} 0 0 1 ${-curve} ${curve}
+            H ${right_B}
+            m 5 -5 l -5 5 l 5 5`;
+    }
+
+    _path_start_to_finish(left_A, right_B, y_A, y_B, y_mid, padding, curve) {
+        const x_left  = left_A - padding;
+        const x_right = right_B + padding;
+
+        return `
+            M ${left_A} ${y_A}
+            H ${x_left + curve}
+            a ${curve} ${curve} 0 0 0 ${-curve} ${curve}
+            V ${y_mid - curve}
+            a ${curve} ${curve} 0 0 0 ${curve} ${curve}
+            H ${x_right - curve}
+            a ${curve} ${curve} 0 0 1 ${curve} ${curve}
+            V ${y_B - curve}
+            a ${curve} ${curve} 0 0 1 ${-curve} ${curve}
+            H ${right_B}
+            m 5 -5 l -5 5 l 5 5`;
+    }
+
+    _get_connected_bars() {
+        const from_id = this.from_task.task.id;
+        const to_id   = this.to_task.task.id;
+        return Array.from(
+            this.gantt.$svg.querySelectorAll(
+                `[data-id="${CSS.escape(from_id)}"], [data-id="${CSS.escape(to_id)}"]`
+            )
+        );
     }
 
     draw() {
@@ -139,11 +198,44 @@ export default class Arrow {
             'data-to': this.to_task.task.id,
             class: arrowClass,
         });
+
+        // Wide transparent path for easier mouse targeting
+        this.hit_element = createSVG('path', {
+            d: this.path,
+            stroke: 'transparent',
+            'stroke-width': 15,
+            fill: 'none',
+            style: 'pointer-events: stroke; cursor: pointer;',
+        });
+
+        this.hit_element.addEventListener('mouseenter', () => {
+            this.is_hovered = true;
+            this.element.classList.add('arrow-hover');
+            const bar_class = this.is_invalid
+                ? 'bar-arrow-invalid'
+                : this.is_critical
+                ? 'bar-arrow-critical'
+                : 'bar-arrow-hover';
+            this._get_connected_bars().forEach(el => {
+                const bar = el.querySelector('.bar');
+                if (bar) bar.classList.add(bar_class);
+            });
+        });
+
+        this.hit_element.addEventListener('mouseleave', () => {
+            this.is_hovered = false;
+            this.element.classList.remove('arrow-hover');
+            this._get_connected_bars().forEach(el => {
+                const bar = el.querySelector('.bar');
+                if (bar) bar.classList.remove('bar-arrow-hover', 'bar-arrow-critical', 'bar-arrow-invalid');
+            });
+        });
     }
 
     update() {
         this.calculate_path();
         this.element.setAttribute('d', this.path);
+        this.hit_element.setAttribute('d', this.path);
 
         // Update invalid state
         this.is_invalid = this.check_invalid_dependency();
@@ -155,6 +247,7 @@ export default class Arrow {
         } else if (this.is_critical) {
             arrowClass = 'arrow-critical';
         }
-        this.element.setAttribute('class', arrowClass);
+        if (this.is_hovered) arrowClass += ' arrow-hover';
+        this.element.setAttribute('class', arrowClass.trim());
     }
 }

@@ -287,11 +287,24 @@
         stroke: var(--g-arrow-invalid-color);
     }
 
+    & .arrow-hover {
+        stroke: var(--g-arrow-hover-color);
+    }
+
+
     & .bar-wrapper .bar {
         fill: var(--g-bar-color);
         stroke: var(--g-bar-border);
         stroke-width: 0;
         transition: stroke-width 0.3s ease;
+    }
+
+    & .bar-wrapper .bar.bar-arrow-critical {
+        outline-color: var(--g-arrow-critical-color);
+    }
+
+    & .bar-wrapper .bar.bar-arrow-invalid {
+        outline-color: var(--g-arrow-invalid-color);
     }
 
     & .bar-progress {

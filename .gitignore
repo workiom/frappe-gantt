@@ -35,3 +35,4 @@ feedback*.md
 
 # Superpowers
 docs/superpowers/*
+.superpowers/*

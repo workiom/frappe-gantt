@@ -1,5 +1,6 @@
 :root {
     --g-arrow-color: #1f2937;
+    --g-arrow-hover-color: #007bff;
     --g-arrow-critical-color: #f5c044;
     --g-arrow-invalid-color: #ff7676;
     --g-bar-color: #fff;
