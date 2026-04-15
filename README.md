@@ -169,17 +169,20 @@ let tasks = [
 
 #### Dependency Shifting Configuration
 
-The `dependency_shifting` option controls how dependent tasks respond when a bar is dragged and released.
+The `dependency_shifting` option controls how dependent tasks respond when a bar is dragged or resized.
 
 **Available Modes:**
 
 - **`none`** (default): No shifting. Dependency arrows may visually overlap — no correction is applied.
 
-- **`maintain_buffer_all`**: When any task moves, every task in the chain (both upstream and downstream) shifts by the same number of days. All gaps between tasks are preserved exactly.
+- **`maintain_buffer_all`**: Shifts tasks by the same delta to preserve all gaps. Direction depends on the interaction:
+  - **Drag**: both upstream and downstream tasks shift
+  - **Right-resize** (end date changes): downstream tasks shift
+  - **Left-resize** (start date changes): upstream tasks shift
 
-- **`maintain_buffer_downstream`**: When a task moves, only downstream tasks shift by the same delta. Tasks before it in the chain stay fixed.
+- **`maintain_buffer_downstream`**: Only downstream (child) tasks ever shift — regardless of whether the bar was dragged or resized. Left-resize does nothing.
 
-- **`consume_buffer`**: Dependency-type-aware shifting. A shift only happens when a real conflict exists — the buffer is consumed first. If no conflict exists, nothing changes. If a conflict exists, only the minimum shift needed to resolve it is applied. Works in both directions.
+- **`consume_buffer`**: Dependency-type-aware shifting. A shift only happens when a real conflict exists — remaining buffer is consumed silently. When buffer is exhausted, the minimum required shift is applied. Direction follows the same rules as `maintain_buffer_all` (drag → both, right-resize → downstream, left-resize → upstream).
 
   Conflict conditions per dependency type:
   | Type | Conflict when |
@@ -198,7 +201,7 @@ let gantt = new Gantt("#gantt", tasks, {
 ```
 
 **Behavior notes:**
-- Shifting fires after drag release (mouseup), not during live dragging
+- Shifting fires after release (mouseup), not during live dragging or resizing
 - When a task has multiple predecessors, the maximum required shift is applied (ensures all constraints are satisfied)
 - Cycles in the dependency graph are safely skipped
 

@@ -1718,7 +1718,21 @@ export default class Gantt {
 
             // Apply dependency shifting
             if (tasks_changed.length > 0 && this.options.dependency_shifting !== 'none') {
+                // Derive shift direction based on mode and interaction type
+                const _mode = this.options.dependency_shifting;
+                let direction;
+                if (is_resizing_left) {
+                    // maintain_buffer_downstream: left-resize does nothing
+                    direction = _mode === 'maintain_buffer_downstream' ? 'none' : 'upstream';
+                } else if (is_resizing_right) {
+                    direction = 'downstream';
+                } else {
+                    // drag: maintain_buffer_downstream pushes downstream only;
+                    // maintain_buffer_all and consume_buffer propagate both ways
+                    direction = _mode === 'maintain_buffer_downstream' ? 'downstream' : 'both';
+                }
                 tasks_changed.forEach(({ task }) => {
+                    if (direction === 'none') return;
                     const dragged_bar = bars.find((b) => b.task.id === task.id);
                     if (!dragged_bar || !dragged_bar.$bar.finaldx) return;
 
@@ -1735,6 +1749,7 @@ export default class Gantt {
                         task.id,
                         deltaMs,
                         this.options.dependency_shifting,
+                        direction,
                     );
 
                     shift_map.forEach((shiftMs, taskId) => {

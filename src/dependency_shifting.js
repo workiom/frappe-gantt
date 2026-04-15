@@ -7,8 +7,13 @@
  * @param {string}   mode        - Value of options.dependency_shifting
  * @returns {Map<string, number>} taskId → deltaMs to apply (movedTaskId is excluded)
  */
-export function compute_dependency_shifts(tasks, movedTaskId, deltaMs, mode) {
+export function compute_dependency_shifts(tasks, movedTaskId, deltaMs, mode, direction = 'downstream') {
     if (mode === 'none' || deltaMs === 0) return new Map();
+
+    if (!['upstream', 'downstream', 'both'].includes(direction)) {
+        console.warn(`[frappe-gantt] compute_dependency_shifts: unknown direction "${direction}", falling back to "downstream"`);
+        direction = 'downstream';
+    }
 
     // Build graph
     const taskById = new Map();
@@ -33,13 +38,17 @@ export function compute_dependency_shifts(tasks, movedTaskId, deltaMs, mode) {
     }
 
     if (mode === 'maintain_buffer_all') {
-        return _bfs_shift(movedTaskId, deltaMs, predecessors, successors, true);
+        const bidirectional = direction === 'both';
+        const upstream_only = direction === 'upstream';
+        return _bfs_shift(movedTaskId, deltaMs, predecessors, successors, bidirectional, upstream_only);
     }
     if (mode === 'maintain_buffer_downstream') {
-        return _bfs_shift(movedTaskId, deltaMs, predecessors, successors, false);
+        const bidirectional = direction === 'both';
+        const upstream_only = direction === 'upstream';
+        return _bfs_shift(movedTaskId, deltaMs, predecessors, successors, bidirectional, upstream_only);
     }
     if (mode === 'consume_buffer') {
-        return _consume_buffer_shift(movedTaskId, deltaMs, taskById, predecessors, successors);
+        return _consume_buffer_shift(movedTaskId, deltaMs, taskById, predecessors, successors, direction);
     }
 
     return new Map();
@@ -47,9 +56,11 @@ export function compute_dependency_shifts(tasks, movedTaskId, deltaMs, mode) {
 
 /**
  * BFS traversal: applies the same deltaMs to every reachable task.
- * bidirectional=true visits both upstream and downstream; false visits downstream only.
+ * bidirectional=true visits both upstream and downstream.
+ * upstream_only=true (and bidirectional=false) visits predecessors only.
+ * Default (both false) visits successors only.
  */
-function _bfs_shift(movedTaskId, deltaMs, predecessors, successors, bidirectional) {
+function _bfs_shift(movedTaskId, deltaMs, predecessors, successors, bidirectional, upstream_only) {
     const result = new Map();
     const visited = new Set([movedTaskId]);
     const queue = [];
@@ -63,14 +74,22 @@ function _bfs_shift(movedTaskId, deltaMs, predecessors, successors, bidirectiona
         }
     };
 
-    enqueue(successors.get(movedTaskId) || []);
-    if (bidirectional) enqueue(predecessors.get(movedTaskId) || []);
+    if (upstream_only && !bidirectional) {
+        enqueue(predecessors.get(movedTaskId) || []);
+    } else {
+        enqueue(successors.get(movedTaskId) || []);
+        if (bidirectional) enqueue(predecessors.get(movedTaskId) || []);
+    }
 
     while (queue.length > 0) {
         const id = queue.shift();
         result.set(id, deltaMs);
-        enqueue(successors.get(id) || []);
-        if (bidirectional) enqueue(predecessors.get(id) || []);
+        if (upstream_only && !bidirectional) {
+            enqueue(predecessors.get(id) || []);
+        } else {
+            enqueue(successors.get(id) || []);
+            if (bidirectional) enqueue(predecessors.get(id) || []);
+        }
     }
 
     return result;
@@ -82,7 +101,7 @@ function _bfs_shift(movedTaskId, deltaMs, predecessors, successors, bidirectiona
  * Backward pass (reverse topological order): pull upstream tasks earlier if needed.
  * Diamond resolution: when multiple predecessors propose a shift, take the maximum.
  */
-function _consume_buffer_shift(movedTaskId, deltaMs, taskById, predecessors, successors) {
+function _consume_buffer_shift(movedTaskId, deltaMs, taskById, predecessors, successors, direction) {
     // Kahn's algorithm for topological order
     const in_degree = new Map();
     for (const [id] of taskById) {
@@ -113,33 +132,37 @@ function _consume_buffer_shift(movedTaskId, deltaMs, taskById, predecessors, suc
     const eff_end = (id) => taskById.get(id)._end.getTime() + (shifts.get(id) || 0);
 
     // Forward pass: push downstream tasks later when a conflict exists
-    for (const id of topo_order) {
-        if (id === movedTaskId) continue;
-        let max_shift = 0;
-        for (const { id: predId, type } of predecessors.get(id) || []) {
-            const needed = _conflict_shift(predId, id, type, eff_start, eff_end);
-            if (needed > max_shift) max_shift = needed;
-        }
-        if (max_shift > 0) {
-            shifts.set(id, (shifts.get(id) || 0) + max_shift);
+    if (direction === 'downstream' || direction === 'both') {
+        for (const id of topo_order) {
+            if (id === movedTaskId) continue;
+            let max_shift = 0;
+            for (const { id: predId, type } of predecessors.get(id) || []) {
+                const needed = _conflict_shift(predId, id, type, eff_start, eff_end);
+                if (needed > max_shift) max_shift = needed;
+            }
+            if (max_shift > 0) {
+                shifts.set(id, (shifts.get(id) || 0) + max_shift);
+            }
         }
     }
 
     // Backward pass: pull upstream tasks earlier when a conflict exists
-    for (let i = topo_order.length - 1; i >= 0; i--) {
-        const id = topo_order[i];
-        if (id === movedTaskId) continue;
-        let max_pull = 0; // most-negative value wins (furthest earlier)
-        for (const { id: succId, type } of successors.get(id) || []) {
-            const needed = _conflict_shift(id, succId, type, eff_start, eff_end);
-            // If a forward conflict exists for this pair, the predecessor must shift earlier
-            if (needed > 0) {
-                const pull = -needed;
-                if (pull < max_pull) max_pull = pull;
+    if (direction === 'upstream' || direction === 'both') {
+        for (let i = topo_order.length - 1; i >= 0; i--) {
+            const id = topo_order[i];
+            if (id === movedTaskId) continue;
+            let max_pull = 0; // most-negative value wins (furthest earlier)
+            for (const { id: succId, type } of successors.get(id) || []) {
+                const needed = _conflict_shift(id, succId, type, eff_start, eff_end);
+                // If a forward conflict exists for this pair, the predecessor must shift earlier
+                if (needed > 0) {
+                    const pull = -needed;
+                    if (pull < max_pull) max_pull = pull;
+                }
             }
-        }
-        if (max_pull < 0) {
-            shifts.set(id, (shifts.get(id) || 0) + max_pull);
+            if (max_pull < 0) {
+                shifts.set(id, (shifts.get(id) || 0) + max_pull);
+            }
         }
     }
 
