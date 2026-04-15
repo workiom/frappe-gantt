@@ -256,6 +256,29 @@ Frappe Gantt provides event callbacks to respond to user interactions:
 | `on_view_change`       | Triggered when the view mode changes.                                        | `mode` (string)                                            |
 | `on_hover`             | Triggered when hovering over a task.                                         | `task`, `screenX`, `screenY`, `event`                      |
 | `on_task_add`          | Triggered when the add task icon is clicked.                                 | `task` - the parent task object                            |
+| `on_arrow_click`       | Triggered when a dependency arrow is clicked (activated). Clicking the same arrow again or clicking outside deselects it — deselection does not re-fire this event. | `from_task`, `to_task` — the connected task objects |
+
+#### Arrow Active State
+
+Hovering over a dependency arrow highlights it and its connected bars, and shows a small badge near the destination bar indicating the dependency type (`FS`, `SS`, `FF`, or `SF`).
+
+Clicking an arrow puts it into an **active state** — the highlight and badge persist even after the mouse moves away.
+
+- **Hover** → highlights arrow and connected bars, shows dependency type badge
+- **Click an arrow or its badge** → activates it, fires `on_arrow_click`, badge stays visible
+- **Click the same arrow again** → deactivates (toggle off), no callback
+- **Click a different arrow** → deactivates the previous, activates the new one
+- **Click anywhere outside** (including outside the SVG) → deactivates
+
+**Example:**
+
+```js
+let gantt = new Gantt("#gantt", tasks, {
+    on_arrow_click: (from_task, to_task) => {
+        console.log(`Dependency: ${from_task.id} → ${to_task.id}`);
+    }
+});
+```
 
 **Example:**
 

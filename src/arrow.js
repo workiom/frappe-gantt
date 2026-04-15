@@ -9,6 +9,7 @@ export default class Arrow {
         this.is_critical = this.check_critical_path();
         this.is_invalid = this.check_invalid_dependency();
         this.is_hovered = false;
+        this.is_active = false;
 
         this.calculate_path();
         this.draw();
@@ -76,26 +77,31 @@ export default class Arrow {
                 this.path = this._path_finish_to_start(
                     right_A, left_A, right_B, left_B, y_A, y_B, y_mid, padding, curve
                 );
+                this.label_pos = { x: left_B, y: y_B, side: 'left' };
                 break;
             case 'start-to-start':
                 this.path = this._path_start_to_start(
                     left_A, left_B, y_A, y_B, padding, curve
                 );
+                this.label_pos = { x: left_B, y: y_B, side: 'left' };
                 break;
             case 'finish-to-finish':
                 this.path = this._path_finish_to_finish(
                     right_A, right_B, y_A, y_B, padding, curve
                 );
+                this.label_pos = { x: right_B, y: y_B, side: 'right' };
                 break;
             case 'start-to-finish':
                 this.path = this._path_start_to_finish(
                     left_A, right_B, y_A, y_B, y_mid, padding, curve
                 );
+                this.label_pos = { x: right_B, y: y_B, side: 'right' };
                 break;
             default:
                 this.path = this._path_finish_to_start(
                     right_A, left_A, right_B, left_B, y_A, y_B, y_mid, padding, curve
                 );
+                this.label_pos = { x: left_B, y: y_B, side: 'left' };
         }
     }
 
@@ -220,6 +226,7 @@ export default class Arrow {
                 const bar = el.querySelector('.bar');
                 if (bar) bar.classList.add(bar_class);
             });
+            this._show_label();
         });
 
         this.hit_element.addEventListener('mouseleave', () => {
@@ -227,8 +234,106 @@ export default class Arrow {
             this.element.classList.remove('arrow-hover');
             this._get_connected_bars().forEach(el => {
                 const bar = el.querySelector('.bar');
-                if (bar) bar.classList.remove('bar-arrow-hover', 'bar-arrow-critical', 'bar-arrow-invalid');
+                if (bar) {
+                    bar.classList.remove('bar-arrow-hover');
+                    if (!this.is_active) {
+                        bar.classList.remove('bar-arrow-critical', 'bar-arrow-invalid');
+                    }
+                }
             });
+            if (!this.is_active && !this.is_hovered) this._hide_label();
+        });
+
+        this.hit_element.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.is_active) {
+                this.gantt.set_active_arrow(null);
+            } else {
+                this.gantt.set_active_arrow(this);
+            }
+        });
+    }
+
+    _get_type_abbr() {
+        const map = {
+            'finish-to-start': 'FS',
+            'start-to-start': 'SS',
+            'finish-to-finish': 'FF',
+            'start-to-finish': 'SF',
+        };
+        return map[this.dependency_type] || 'FS';
+    }
+
+    _show_label() {
+        if (this.label_element) return;
+        const abbr = this._get_type_abbr();
+        const w = 21;
+        const h = 20;
+        const { x: tip_x, y: tip_y, side } = this.label_pos;
+        const cx = side === 'left'
+            ? tip_x - 10 - w / 2
+            : tip_x + 10 + w / 2;
+        const cy = tip_y;
+
+        this.label_element = createSVG('g', { class: 'arrow-type-label' });
+        const bg = createSVG('rect', {
+            x: cx - w / 2,
+            y: cy - h / 2,
+            width: w,
+            height: h,
+            rx: 3,
+        });
+        const text = createSVG('text', {
+            x: cx,
+            y: cy,
+            'dominant-baseline': 'middle',
+            'text-anchor': 'middle',
+        });
+        text.textContent = abbr;
+        this.label_element.appendChild(bg);
+        this.label_element.appendChild(text);
+        this.label_element.addEventListener('mouseenter', () => {
+            this.hit_element.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+        });
+        this.label_element.addEventListener('mouseleave', () => {
+            this.hit_element.dispatchEvent(new MouseEvent('mouseleave', { bubbles: false }));
+        });
+        this.label_element.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.hit_element.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+        });
+        this.gantt.layers.arrow.appendChild(this.label_element);
+    }
+
+    _hide_label() {
+        if (this.label_element) {
+            this.label_element.remove();
+            this.label_element = null;
+        }
+    }
+
+    activate() {
+        this.is_active = true;
+        this.element.classList.add('arrow-active');
+        this._show_label();
+        const bar_class = this.is_invalid
+            ? 'bar-arrow-invalid'
+            : this.is_critical
+            ? 'bar-arrow-critical'
+            : 'bar-arrow-active';
+        this._get_connected_bars().forEach(el => {
+            const bar = el.querySelector('.bar');
+            if (bar) bar.classList.add(bar_class);
+        });
+    }
+
+    deactivate() {
+        this.is_active = false;
+        this.element.classList.remove('arrow-active');
+        this._hide_label();
+        this._get_connected_bars().forEach(el => {
+            const bar = el.querySelector('.bar');
+            if (bar) bar.classList.remove('bar-arrow-active', 'bar-arrow-critical', 'bar-arrow-invalid');
         });
     }
 
@@ -248,6 +353,7 @@ export default class Arrow {
             arrowClass = 'arrow-critical';
         }
         if (this.is_hovered) arrowClass += ' arrow-hover';
+        if (this.is_active) arrowClass += ' arrow-active';
         this.element.setAttribute('class', arrowClass.trim());
     }
 }

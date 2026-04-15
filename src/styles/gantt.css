@@ -291,12 +291,38 @@
         stroke: var(--g-arrow-hover-color);
     }
 
+    & .arrow-active {
+        stroke: var(--g-arrow-hover-color);
+    }
+
+    & .arrow-type-label {
+        stroke-width: 0;
+        cursor: pointer;
+    }
+
+    & .arrow-type-label rect {
+        fill: var(--g-arrow-type-label-bg);
+    }
+
+    & .arrow-type-label text {
+        fill: var(--g-arrow-type-label-color);
+        font-size: 10px;
+        font-weight: 600;
+        font-family: inherit;
+        pointer-events: none;
+    }
 
     & .bar-wrapper .bar {
         fill: var(--g-bar-color);
         stroke: var(--g-bar-border);
         stroke-width: 0;
         transition: stroke-width 0.3s ease;
+    }
+
+    & .bar-wrapper .bar.bar-arrow-active {
+        outline-color: var(--g-arrow-hover-color);
+        outline-width: 2px;
+        outline-style: solid;
     }
 
     & .bar-wrapper .bar.bar-arrow-critical {

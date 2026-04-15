@@ -40,6 +40,25 @@ This is an SVG-based Gantt chart library. Entry point is `src/index.js` which ex
 - `src/dependency_shifting.js` — Pure-function module for dependency date shifting. Exports `compute_dependency_shifts(tasks, movedTaskId, deltaMs, mode, direction)` → `Map<taskId, deltaMs>`. `direction` is `'upstream'`, `'downstream'`, or `'both'` and controls traversal direction. Contains graph building, BFS traversal (maintain_buffer modes), and topological-sort-based conflict resolution (consume_buffer mode).
 - `src/styles/` — CSS for the gantt chart.
 
+## Documentation Rules
+
+Update `README.md` and `CLAUDE.md` only when needed:
+
+- **Update `README.md`** when user-facing behavior changes: new options, new events, new interaction patterns, or changes to how existing features work. Do not update for internal refactors, bug fixes, or CSS-only tweaks that don't change documented behavior.
+- **Update `CLAUDE.md`** when a new project-wide rule or architectural pattern is established, or when a decision is made that future sessions should follow. Do not update for one-off task details or temporary context.
+
+## Styling Rules
+
+**Never hardcode color values in CSS files.** All colors must use CSS custom properties (variables).
+
+When introducing any new color:
+1. **First, check if an existing variable in `src/styles/light.css` already represents the right color** — reuse it if so.
+2. **If no existing variable fits**, define a new one:
+   - Add `--g-<name>: <value>` to `src/styles/light.css` (`:root` block)
+   - Add `--g-<name>-dark: <value>` to `src/styles/dark.css` (`:root` block) with an appropriate dark-theme equivalent
+   - Use `var(--g-<name>)` in `src/styles/gantt.css`
+   - Use `var(--g-<name>-dark)` in the `.dark` block of `src/styles/dark.css`
+
 **Build:** Vite builds to `dist/frappe-gantt.es.js` and `dist/frappe-gantt.umd.js` with `dist/frappe-gantt.css`.
 
 **Key design patterns:**

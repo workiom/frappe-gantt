@@ -1078,6 +1078,7 @@ export default class Gantt {
 
     make_arrows() {
         this.arrows = [];
+        this.active_arrow = null;
 
         // Calculate critical path if enabled
         if (this.options.critical_path) {
@@ -1454,6 +1455,7 @@ export default class Gantt {
         let parent_bar_id = null;
         let bars = []; // instanceof Bar
         this.bar_being_dragged = null;
+        this.active_arrow = null;
 
         const action_in_progress = () =>
             is_dragging || is_resizing_left || is_resizing_right;
@@ -1461,6 +1463,11 @@ export default class Gantt {
         this.$svg.onclick = (e) => {
             if (e.target.classList.contains('grid-row')) this.unselect_all();
         };
+
+        if (!this._document_click_handler) {
+            this._document_click_handler = () => this.set_active_arrow(null);
+            document.addEventListener('click', this._document_click_handler);
+        }
 
         let pos = 0;
         $.on(this.$svg, 'mousemove', '.bar-wrapper, .handle', (e) => {
@@ -2023,6 +2030,20 @@ export default class Gantt {
             return this.config.ignored_positions.filter(
                 (val) => pos >= val && pos < val + this.config.column_width,
             );
+        }
+    }
+
+    set_active_arrow(arrow) {
+        if (this.active_arrow === arrow) return;
+        if (this.active_arrow) {
+            this.active_arrow.deactivate();
+        }
+        this.active_arrow = arrow;
+        if (arrow) {
+            arrow.activate();
+            if (this.options.on_arrow_click) {
+                this.options.on_arrow_click(arrow.from_task.task, arrow.to_task.task);
+            }
         }
     }
 

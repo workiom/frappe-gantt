@@ -11,6 +11,8 @@
     --g-arrow-hover-color-dark: #60a5fa;
     --g-arrow-critical-color-dark: #f5c044;
     --g-arrow-invalid-color-dark: #ff7676;
+    --g-arrow-type-label-bg-dark: #4a4a4a;
+    --g-arrow-type-label-color-dark: #fff;
     --g-resize-handle-hover-dark: rgba(96, 165, 250, 0.4);
     --g-resize-handle-active-dark: rgba(96, 165, 250, 0.6);
 }
@@ -44,9 +46,25 @@
         stroke: var(--g-arrow-hover-color-dark);
     }
 
+    & .arrow-active {
+        stroke: var(--g-arrow-hover-color-dark);
+    }
+
+    & .arrow-type-label rect {
+        fill: var(--g-arrow-type-label-bg-dark);
+    }
+
+    & .arrow-type-label text {
+        fill: var(--g-arrow-type-label-color-dark);
+    }
+
     & .bar {
         fill: var(--g-bar-color-dark);
         stroke: none;
+    }
+
+    & .bar-wrapper .bar.bar-arrow-active {
+        outline-color: var(--g-arrow-hover-color-dark);
     }
 
     & .bar-progress {
