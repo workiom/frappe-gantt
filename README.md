@@ -78,6 +78,7 @@ Frappe Gantt offers a wide range of options to customize your chart.
 
 | **Option**               | **Description**                                               | **Possible Values**                                                                                                                                                           | **Default**                                         |
 | ------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `allow_dependency_creation` | Enables interactive dependency creation by dragging between connector circles on task bars. When enabled, hovering a bar reveals circles at its start and end; drag from one circle to another to create a typed dependency. | `true`, `false` | `true` |
 | `arrow_curve`            | Curve radius of arrows connecting dependencies.               | Any positive integer.                                                                                                                                                         | `5`                                                 |
 | `auto_move_label`        | Move task labels when user scrolls horizontally.              | `true`, `false`                                                                                                                                                               | `false`                                             |
 | `bar_corner_radius`      | Radius of the task bar corners (in pixels).                   | Any positive integer.                                                                                                                                                         | `3`                                                 |
@@ -257,6 +258,9 @@ Frappe Gantt provides event callbacks to respond to user interactions:
 | `on_hover`             | Triggered when hovering over a task.                                         | `task`, `screenX`, `screenY`, `event`                      |
 | `on_task_add`          | Triggered when the add task icon is clicked.                                 | `task` - the parent task object                            |
 | `on_arrow_click`       | Triggered when a dependency arrow is clicked (activated). Clicking the same arrow again or clicking outside deselects it — deselection does not re-fire this event. | `from_task`, `to_task` — the connected task objects |
+| `on_dependency_create` | Triggered when a new dependency is created via interactive linking (no prior connection between the two tasks). | `from_task`, `to_task`, `type` — the dependency type string (e.g. `'finish-to-start'`) |
+| `on_dependency_changed` | Triggered when an existing dependency between two tasks is replaced with a different type. | `from_task`, `to_task`, `old_type`, `new_type` |
+| `on_dependency_delete` | Triggered when a dependency is removed — either by pressing Delete/Backspace while an arrow is active, or by re-connecting the same two tasks with the same type (toggle off). | `from_task`, `to_task`, `type` |
 
 #### Arrow Active State
 
@@ -276,6 +280,44 @@ Clicking an arrow puts it into an **active state** — the highlight and badge p
 let gantt = new Gantt("#gantt", tasks, {
     on_arrow_click: (from_task, to_task) => {
         console.log(`Dependency: ${from_task.id} → ${to_task.id}`);
+    }
+});
+```
+
+#### Interactive Dependency Linking
+
+When `allow_dependency_creation` is `true` (the default), hovering over any task bar reveals connector circles at its start (green) and end (orange). Drag from one circle to a circle on a different bar to create a dependency between them.
+
+The dependency type is determined automatically by which circles are connected:
+
+| From endpoint | To endpoint | Type created |
+|---|---|---|
+| End | Start | `finish-to-start` |
+| Start | Start | `start-to-start` |
+| End | End | `finish-to-finish` |
+| Start | End | `start-to-finish` |
+
+**Behaviors:**
+- Only one dependency between any two tasks is stored at a time. If the two tasks are already linked, dragging replaces the old type with the new one.
+- Dragging from one task to itself is ignored.
+- If you re-connect the same two tasks with the **same** type, the dependency is toggled off (removed).
+- Dependency creation is disabled when `readonly: true`.
+
+**Deleting a dependency:**
+1. Click a dependency arrow to activate it (it stays highlighted).
+2. Press **Delete** or **Backspace** — the arrow and its underlying dependency are removed.
+
+```js
+let gantt = new Gantt("#gantt", tasks, {
+    allow_dependency_creation: true,
+    on_dependency_create: (from_task, to_task, type) => {
+        console.log(`Created: ${from_task.id} → ${to_task.id} (${type})`);
+    },
+    on_dependency_changed: (from_task, to_task, old_type, new_type) => {
+        console.log(`Changed: ${from_task.id} → ${to_task.id} (${old_type} → ${new_type})`);
+    },
+    on_dependency_delete: (from_task, to_task, type) => {
+        console.log(`Deleted: ${from_task.id} → ${to_task.id} (${type})`);
     }
 });
 ```

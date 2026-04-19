@@ -108,6 +108,7 @@ const DEFAULT_VIEW_MODES = [
 ];
 
 const DEFAULT_OPTIONS = {
+    allow_dependency_creation: true,
     arrow_curve: 5,
     auto_move_label: false,
     bar_corner_radius: 3,

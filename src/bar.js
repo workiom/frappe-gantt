@@ -115,6 +115,7 @@ export default class Bar {
         if (this.gantt.options.task_add_icon_position) {
             this.draw_add_task_icon();
         }
+        this.draw_connector_circles();
     }
 
     draw_bar() {
@@ -439,6 +440,48 @@ export default class Bar {
         }
     }
 
+    draw_connector_circles() {
+        this.$connector_start = null;
+        this.$connector_end = null;
+        if (!this.gantt.options.allow_dependency_creation) return;
+        if (this.gantt.options.readonly) return;
+        const isRTL = this.gantt.options.isRTL;
+        const cy = this.y + this.height / 2;
+        const start_cx = isRTL ? this.x + this.width : this.x;
+        const end_cx = isRTL ? this.x : this.x + this.width;
+
+        this.$connector_start = createSVG('circle', {
+            class: 'connector-circle connector-start',
+            'data-endpoint': 'start',
+            cx: start_cx,
+            cy,
+            r: 4,
+            append_to: this.handle_group,
+        });
+        this.$connector_end = createSVG('circle', {
+            class: 'connector-circle connector-end',
+            'data-endpoint': 'end',
+            cx: end_cx,
+            cy,
+            r: 4,
+            append_to: this.handle_group,
+        });
+    }
+
+    update_connector_circles() {
+        if (!this.$connector_start) return;
+        const isRTL = this.gantt.options.isRTL;
+        const bx = this.$bar.getX();
+        const bw = this.$bar.getWidth();
+        const cy = this.y + this.height / 2;
+        const start_cx = isRTL ? bx + bw : bx;
+        const end_cx = isRTL ? bx : bx + bw;
+        this.$connector_start.setAttribute('cx', start_cx);
+        this.$connector_start.setAttribute('cy', cy);
+        this.$connector_end.setAttribute('cx', end_cx);
+        this.$connector_end.setAttribute('cy', cy);
+    }
+
     bind() {
         if (this.invalid) return;
         this.setup_click_event();
@@ -653,6 +696,7 @@ export default class Bar {
 
         this.update_progressbar_position();
         this.update_arrow_position();
+        this.update_connector_circles();
     }
 
     update_label_position_on_horizontal_scroll({ x, sx }) {

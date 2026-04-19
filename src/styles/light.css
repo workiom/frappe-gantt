@@ -28,4 +28,8 @@
     --g-task-row-bg: #ffffff;
     --g-resize-handle-hover: rgba(59, 130, 246, 0.3);
     --g-resize-handle-active: rgba(59, 130, 246, 0.5);
+    --g-connector-start-color: #22c55e;
+    --g-connector-end-color: #f97316;
+    --g-connector-linking-color: #6366f1;
+    --g-connector-fill: #ffffff;
 }

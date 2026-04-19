@@ -398,6 +398,28 @@
                 display: block;
             }
         }
+
+        & .connector-circle {
+            fill: var(--g-connector-fill);
+            opacity: 0;
+            cursor: crosshair;
+            transition: opacity 0.2s ease;
+            pointer-events: all;
+        }
+
+        & .connector-circle.connector-start {
+            stroke: var(--g-connector-start-color);
+            stroke-width: 2;
+        }
+
+        & .connector-circle.connector-end {
+            stroke: var(--g-connector-end-color);
+            stroke-width: 2;
+        }
+
+        &:hover .connector-circle {
+            opacity: 1;
+        }
     }
 
     & .add-task-icon {
@@ -429,6 +451,27 @@
                 stroke: var(--g-text-light);
             }
         }
+    }
+
+    & .linking-temp-line {
+        stroke: var(--g-connector-linking-color);
+        stroke-width: 2;
+        stroke-dasharray: 5, 4;
+        fill: none;
+        pointer-events: none;
+    }
+
+    & .linking-temp-line.snap {
+        stroke: var(--g-connector-start-color);
+        stroke-dasharray: 0;
+    }
+
+    & .linking-snap-badge {
+        font-size: 11px;
+        font-weight: 700;
+        fill: var(--g-connector-start-color);
+        pointer-events: none;
+        user-select: none;
     }
 }
 

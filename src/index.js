@@ -449,6 +449,9 @@ export default class Gantt {
         this.bind_bar_events();
         this.bind_task_column_resize();
         this.bind_task_column_scroll();
+        if (this.options.allow_dependency_creation) {
+            this.bind_dependency_linking();
+        }
     }
 
     render() {
@@ -471,6 +474,12 @@ export default class Gantt {
         for (let layer of layers) {
             this.layers[layer] = createSVG('g', {
                 class: layer,
+                append_to: this.$svg,
+            });
+        }
+        if (this.options.allow_dependency_creation) {
+            this.layers.linking = createSVG('g', {
+                class: 'linking',
                 append_to: this.$svg,
             });
         }
@@ -1479,6 +1488,7 @@ export default class Gantt {
         });
 
         $.on(this.$svg, 'mousedown', '.bar-wrapper, .handle', (e, element) => {
+            if (e.target.classList.contains('connector-circle')) return;
             const bar_wrapper = $.closest('.bar-wrapper', element);
             if (element.classList.contains('left')) {
                 is_resizing_left = true;
@@ -1945,7 +1955,6 @@ export default class Gantt {
             }
 
             let dx = now_x - x_on_start;
-            console.log($bar_progress);
             if (dx > $bar_progress.max_dx) {
                 dx = $bar_progress.max_dx;
             }
@@ -1970,6 +1979,229 @@ export default class Gantt {
             $bar_progress = null;
             $bar = null;
         });
+    }
+
+    bind_dependency_linking() {
+        this.is_linking = false;
+        this.linking_source_bar = null;
+        this.linking_source_endpoint = null;
+        this.linking_temp_line = null;
+        this.linking_snap_badge = null;
+
+        $.on(this.$svg, 'mousedown', '.connector-circle', (e, circle) => {
+            const bar_wrapper = $.closest('.bar-wrapper', circle);
+            if (!bar_wrapper) return;
+            const bar_id = bar_wrapper.getAttribute('data-id');
+            const source_bar = this.get_bar(bar_id);
+            if (!source_bar) return;
+
+            this.is_linking = true;
+            this.linking_source_bar = source_bar;
+            this.linking_source_endpoint = circle.getAttribute('data-endpoint');
+
+            const cx = parseFloat(circle.getAttribute('cx'));
+            const cy = parseFloat(circle.getAttribute('cy'));
+
+            this.linking_temp_line = createSVG('line', {
+                x1: cx,
+                y1: cy,
+                x2: cx,
+                y2: cy,
+                class: 'linking-temp-line',
+                append_to: this.layers.linking,
+            });
+        });
+
+        $.on(this.$svg, 'mousemove', (e) => {
+            if (!this.is_linking || !this.linking_temp_line) return;
+            const pt = this.$svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const svgP = pt.matrixTransform(this.$svg.getScreenCTM().inverse());
+            this.linking_temp_line.setAttribute('x2', svgP.x);
+            this.linking_temp_line.setAttribute('y2', svgP.y);
+        });
+
+        $.on(this.$svg, 'mouseover', '.connector-circle', (e, circle) => {
+            if (!this.is_linking) return;
+            const bar_wrapper = $.closest('.bar-wrapper', circle);
+            if (!bar_wrapper) return;
+            const bar_id = bar_wrapper.getAttribute('data-id');
+            if (bar_id === this.linking_source_bar.task.id) return;
+
+            circle.setAttribute('r', '9');
+            if (this.linking_temp_line) {
+                this.linking_temp_line.classList.add('snap');
+            }
+
+            if (!this.linking_snap_badge) {
+                const to_ep = circle.getAttribute('data-endpoint');
+                const type = this._resolve_dependency_type(
+                    this.linking_source_endpoint,
+                    to_ep,
+                );
+                const abbr = { 'finish-to-start': 'FS', 'start-to-start': 'SS', 'finish-to-finish': 'FF', 'start-to-finish': 'SF' }[type] || 'FS';
+                const cx = parseFloat(circle.getAttribute('cx'));
+                const cy = parseFloat(circle.getAttribute('cy'));
+                this.linking_snap_badge = createSVG('text', {
+                    x: cx + 12,
+                    y: cy - 10,
+                    class: 'linking-snap-badge',
+                    append_to: this.layers.linking,
+                });
+                this.linking_snap_badge.textContent = abbr;
+            }
+        });
+
+        $.on(this.$svg, 'mouseout', '.connector-circle', (e, circle) => {
+            if (!this.is_linking) return;
+            circle.setAttribute('r', '4');
+            if (this.linking_temp_line) {
+                this.linking_temp_line.classList.remove('snap');
+            }
+            if (this.linking_snap_badge) {
+                this.linking_snap_badge.remove();
+                this.linking_snap_badge = null;
+            }
+        });
+
+        $.on(this.$svg, 'mouseup', '.connector-circle', (e, circle) => {
+            if (!this.is_linking) return;
+            const bar_wrapper = $.closest('.bar-wrapper', circle);
+            if (!bar_wrapper) return;
+            const bar_id = bar_wrapper.getAttribute('data-id');
+            if (bar_id !== this.linking_source_bar.task.id) {
+                const to_bar = this.get_bar(bar_id);
+                const to_endpoint = circle.getAttribute('data-endpoint');
+                if (to_bar) {
+                    this._commit_dependency(to_bar, to_endpoint);
+                }
+            }
+            // _cancel_linking() is called by the document mouseup handler
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!this.is_linking) return;
+            this._cancel_linking();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (
+                (e.key === 'Delete' || e.key === 'Backspace') &&
+                this.active_arrow
+            ) {
+                const tag = e.target.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+                e.preventDefault();
+                this.delete_dependency(this.active_arrow);
+            }
+        });
+    }
+
+    _resolve_dependency_type(from_endpoint, to_endpoint) {
+        if (from_endpoint === 'end' && to_endpoint === 'start') return 'finish-to-start';
+        if (from_endpoint === 'start' && to_endpoint === 'start') return 'start-to-start';
+        if (from_endpoint === 'end' && to_endpoint === 'end') return 'finish-to-finish';
+        if (from_endpoint === 'start' && to_endpoint === 'end') return 'start-to-finish';
+        return 'finish-to-start';
+    }
+
+    _commit_dependency(to_bar, to_endpoint) {
+        const from_task = this.linking_source_bar.task;
+        const to_task = to_bar.task;
+        const type = this._resolve_dependency_type(
+            this.linking_source_endpoint,
+            to_endpoint,
+        );
+
+        // Find any existing dependency from the same source task (any type)
+        const existing = to_task.dependencies.find((d) => d.id === from_task.id);
+        const existing_type = existing
+            ? existing.type || this.options.dependencies_type || 'finish-to-start'
+            : null;
+
+        // Remove existing connection between this pair (if any)
+        const deps_without_existing = to_task.dependencies.filter(
+            (d) => d.id !== from_task.id,
+        );
+
+        if (existing_type === type) {
+            // Same type drawn again — toggle off (just remove)
+            this.update_task(to_task.id, { dependencies: deps_without_existing });
+            if (this.options.on_dependency_delete) {
+                this.options.on_dependency_delete(from_task, to_task, type);
+            }
+            return;
+        }
+
+        // Remove reverse dependency if it exists (prevents cycles)
+        const reverse = from_task.dependencies?.find((d) => d.id === to_task.id);
+        if (reverse) {
+            const reverse_type =
+                reverse.type || this.options.dependencies_type || 'finish-to-start';
+            this.update_task(from_task.id, {
+                dependencies: from_task.dependencies.filter((d) => d.id !== to_task.id),
+            });
+            if (this.options.on_dependency_delete) {
+                this.options.on_dependency_delete(to_task, from_task, reverse_type);
+            }
+        }
+
+        // Different type (or no prior connection) — replace with new
+        const new_deps = [...deps_without_existing, { id: from_task.id, type }];
+        this.update_task(to_task.id, { dependencies: new_deps });
+
+        if (existing) {
+            if (this.options.on_dependency_changed) {
+                this.options.on_dependency_changed(
+                    from_task,
+                    to_task,
+                    existing_type,
+                    type,
+                );
+            }
+        } else {
+            if (this.options.on_dependency_create) {
+                this.options.on_dependency_create(from_task, to_task, type);
+            }
+        }
+    }
+
+    _cancel_linking() {
+        if (this.linking_temp_line) {
+            this.linking_temp_line.remove();
+            this.linking_temp_line = null;
+        }
+        if (this.linking_snap_badge) {
+            this.linking_snap_badge.remove();
+            this.linking_snap_badge = null;
+        }
+        this.$svg
+            .querySelectorAll('.connector-circle[r="9"]')
+            .forEach((el) => el.setAttribute('r', '4'));
+
+        this.is_linking = false;
+        this.linking_source_bar = null;
+        this.linking_source_endpoint = null;
+    }
+
+    delete_dependency(arrow) {
+        const from_task = arrow.from_task.task;
+        const to_task = arrow.to_task.task;
+        const arrow_type = arrow.dependency_type;
+
+        const new_deps = to_task.dependencies.filter((d) => {
+            const dep_type =
+                d.type || this.options.dependencies_type || 'finish-to-start';
+            return !(d.id === from_task.id && dep_type === arrow_type);
+        });
+
+        this.set_active_arrow(null);
+        this.update_task(to_task.id, { dependencies: new_deps });
+
+        if (this.options.on_dependency_delete) {
+            this.options.on_dependency_delete(from_task, to_task, arrow_type);
+        }
     }
 
     get_all_dependent_tasks(task_id) {

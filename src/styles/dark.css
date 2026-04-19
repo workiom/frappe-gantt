@@ -15,6 +15,10 @@
     --g-arrow-type-label-color-dark: #fff;
     --g-resize-handle-hover-dark: rgba(96, 165, 250, 0.4);
     --g-resize-handle-active-dark: rgba(96, 165, 250, 0.6);
+    --g-connector-start-color-dark: #4ade80;
+    --g-connector-end-color-dark: #fb923c;
+    --g-connector-linking-color-dark: #818cf8;
+    --g-connector-fill-dark: #ffffff;
 }
 
 .dark > .gantt-container .gantt {
@@ -105,6 +109,11 @@
             }
         }
     }
+
+    --g-connector-start-color: var(--g-connector-start-color-dark);
+    --g-connector-end-color: var(--g-connector-end-color-dark);
+    --g-connector-linking-color: var(--g-connector-linking-color-dark);
+    --g-connector-fill: var(--g-connector-fill-dark);
 }
 
 .dark > .gantt-container {
