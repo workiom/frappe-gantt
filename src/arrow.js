@@ -107,22 +107,34 @@ export default class Arrow {
 
     _path_finish_to_start(right_A, left_A, right_B, left_B, y_A, y_B, y_mid, padding, curve) {
         const x_right = right_A + padding;
+        const going_up = y_B < y_A;
 
         if (x_right < left_B) {
-            // Case 1: space between tasks — 3 segments: right, down, right
+            // Case 1: gap between tasks — 3 segments: right, vertical, right
+            if (!going_up) {
+                return `
+            M ${right_A} ${y_A}
+            H ${x_right - curve}
+            a ${curve} ${curve} 0 0 1 ${curve} ${curve}
+            V ${y_B - curve}
+            a ${curve} ${curve} 0 0 0 ${curve} ${curve}
+            H ${left_B}
+            m -5 -5 l 5 5 l -5 5`;
+            }
             return `
-                M ${right_A} ${y_A}
-                H ${x_right - curve}
-                a ${curve} ${curve} 0 0 1 ${curve} ${curve}
-                V ${y_B - curve}
-                a ${curve} ${curve} 0 0 0 ${curve} ${curve}
-                H ${left_B}
-                m -5 -5 l 5 5 l -5 5`;
+            M ${right_A} ${y_A}
+            H ${x_right - curve}
+            a ${curve} ${curve} 0 0 0 ${curve} ${-curve}
+            V ${y_B + curve}
+            a ${curve} ${curve} 0 0 1 ${curve} ${-curve}
+            H ${left_B}
+            m -5 -5 l 5 5 l -5 5`;
         }
 
-        // Case 2: overlap — 5 segments: right, down, left, down, right
+        // Case 2: overlap — 5 segments: right, vertical, left, vertical, right
         const x_left = left_B - padding;
-        return `
+        if (!going_up) {
+            return `
             M ${right_A} ${y_A}
             H ${x_right - curve}
             a ${curve} ${curve} 0 0 1 ${curve} ${curve}
@@ -134,12 +146,27 @@ export default class Arrow {
             a ${curve} ${curve} 0 0 0 ${curve} ${curve}
             H ${left_B}
             m -5 -5 l 5 5 l -5 5`;
+        }
+        return `
+            M ${right_A} ${y_A}
+            H ${x_right - curve}
+            a ${curve} ${curve} 0 0 0 ${curve} ${-curve}
+            V ${y_mid + curve}
+            a ${curve} ${curve} 0 0 0 ${-curve} ${-curve}
+            H ${x_left + curve}
+            a ${curve} ${curve} 0 0 1 ${-curve} ${-curve}
+            V ${y_B + curve}
+            a ${curve} ${curve} 0 0 1 ${curve} ${-curve}
+            H ${left_B}
+            m -5 -5 l 5 5 l -5 5`;
     }
 
     _path_start_to_start(left_A, left_B, y_A, y_B, padding, curve) {
         const x_left = Math.min(left_A, left_B) - padding;
+        const going_up = y_B < y_A;
 
-        return `
+        if (!going_up) {
+            return `
             M ${left_A} ${y_A}
             H ${x_left + curve}
             a ${curve} ${curve} 0 0 0 ${-curve} ${curve}
@@ -147,12 +174,23 @@ export default class Arrow {
             a ${curve} ${curve} 0 0 0 ${curve} ${curve}
             H ${left_B}
             m -5 -5 l 5 5 l -5 5`;
+        }
+        return `
+            M ${left_A} ${y_A}
+            H ${x_left + curve}
+            a ${curve} ${curve} 0 0 1 ${-curve} ${-curve}
+            V ${y_B + curve}
+            a ${curve} ${curve} 0 0 1 ${curve} ${-curve}
+            H ${left_B}
+            m -5 -5 l 5 5 l -5 5`;
     }
 
     _path_finish_to_finish(right_A, right_B, y_A, y_B, padding, curve) {
         const x_right = Math.max(right_A, right_B) + padding;
+        const going_up = y_B < y_A;
 
-        return `
+        if (!going_up) {
+            return `
             M ${right_A} ${y_A}
             H ${x_right - curve}
             a ${curve} ${curve} 0 0 1 ${curve} ${curve}
@@ -160,13 +198,27 @@ export default class Arrow {
             a ${curve} ${curve} 0 0 1 ${-curve} ${curve}
             H ${right_B}
             m 5 -5 l -5 5 l 5 5`;
+        }
+        return `
+            M ${right_A} ${y_A}
+            H ${x_right - curve}
+            a ${curve} ${curve} 0 0 0 ${curve} ${-curve}
+            V ${y_B + curve}
+            a ${curve} ${curve} 0 0 0 ${-curve} ${-curve}
+            H ${right_B}
+            m 5 -5 l -5 5 l 5 5`;
     }
 
     _path_start_to_finish(left_A, right_B, y_A, y_B, y_mid, padding, curve) {
         const x_left  = left_A - padding;
         const x_right = right_B + padding;
+        const going_up = y_B < y_A;
+        // crossed: from-task is to the right of to-task — not enough room for mid-column detour
+        const crossed = x_right < x_left + 2 * curve;
 
-        return `
+        if (!crossed) {
+            if (!going_up) {
+                return `
             M ${left_A} ${y_A}
             H ${x_left + curve}
             a ${curve} ${curve} 0 0 0 ${-curve} ${curve}
@@ -176,6 +228,39 @@ export default class Arrow {
             a ${curve} ${curve} 0 0 1 ${curve} ${curve}
             V ${y_B - curve}
             a ${curve} ${curve} 0 0 1 ${-curve} ${curve}
+            H ${right_B}
+            m 5 -5 l -5 5 l 5 5`;
+            }
+            return `
+            M ${left_A} ${y_A}
+            H ${x_left + curve}
+            a ${curve} ${curve} 0 0 1 ${-curve} ${-curve}
+            V ${y_mid + curve}
+            a ${curve} ${curve} 0 0 1 ${curve} ${-curve}
+            H ${x_right - curve}
+            a ${curve} ${curve} 0 0 0 ${curve} ${-curve}
+            V ${y_B + curve}
+            a ${curve} ${curve} 0 0 0 ${-curve} ${-curve}
+            H ${right_B}
+            m 5 -5 l -5 5 l 5 5`;
+        }
+
+        if (!going_up) {
+            return `
+            M ${left_A} ${y_A}
+            H ${x_left + curve}
+            a ${curve} ${curve} 0 0 0 ${-curve} ${curve}
+            V ${y_B - curve}
+            a ${curve} ${curve} 0 0 1 ${-curve} ${curve}
+            H ${right_B}
+            m 5 -5 l -5 5 l 5 5`;
+        }
+        return `
+            M ${left_A} ${y_A}
+            H ${x_left + curve}
+            a ${curve} ${curve} 0 0 1 ${-curve} ${-curve}
+            V ${y_B + curve}
+            a ${curve} ${curve} 0 0 0 ${-curve} ${-curve}
             H ${right_B}
             m 5 -5 l -5 5 l 5 5`;
     }
