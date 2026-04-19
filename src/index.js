@@ -1356,7 +1356,7 @@ export default class Gantt {
             '.grid-row, .grid-header, .ignored-bar, .holiday-highlight',
             (e, delegatedTarget) => {
                 // Check if click is on a grid-row (not header or other elements)
-                if (delegatedTarget && delegatedTarget.classList.contains('grid-row')) {
+                if (delegatedTarget && (delegatedTarget.classList.contains('grid-row') || delegatedTarget.classList.contains('ignored-bar') || delegatedTarget.classList.contains('holiday-highlight'))) {
                     // Get the click position relative to the SVG
                     const svg = this.$svg;
                     const pt = svg.createSVGPoint();
@@ -1379,6 +1379,13 @@ export default class Gantt {
                             units_from_start,
                             this.config.unit
                         );
+
+                        // If weekend/ignored skipping is enabled, advance to next non-ignored day
+                        if (this.config.ignored_function) {
+                            while (this.config.ignored_function(clicked_date)) {
+                                clicked_date = date_utils.add(clicked_date, 1, 'day');
+                            }
+                        }
 
                         // Set start date to clicked date and end date to 1 day after
                         task._start = clicked_date;
