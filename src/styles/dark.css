@@ -19,6 +19,10 @@
     --g-connector-end-color-dark: #fb923c;
     --g-connector-linking-color-dark: #818cf8;
     --g-connector-fill-dark: #ffffff;
+    --g-arrow-type-dropdown-bg-dark: #2a2a2a;
+    --g-arrow-type-dropdown-border-dark: #444444;
+    --g-arrow-type-option-hover-bg-dark: #3a3a3a;
+    --g-arrow-type-option-active-bg-dark: #333333;
 }
 
 .dark > .gantt-container .gantt {
@@ -147,5 +151,26 @@
 
     & .task-column.resizing .task-column-resize-handle {
         background-color: var(--g-resize-handle-active-dark);
+    }
+
+    & .arrow-type-dropdown {
+        background: var(--g-arrow-type-dropdown-bg-dark);
+        border-color: var(--g-arrow-type-dropdown-border-dark);
+    }
+
+    & .arrow-type-option:hover {
+        background: var(--g-arrow-type-option-hover-bg-dark);
+    }
+
+    & .arrow-type-option.active {
+        background: var(--g-arrow-type-option-active-bg-dark);
+    }
+
+    & .arrow-type-option {
+        color: var(--g-text-color-dark);
+    }
+
+    & .arrow-type-option span {
+        color: var(--g-text-muted-dark);
     }
 }

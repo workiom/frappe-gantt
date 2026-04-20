@@ -32,4 +32,8 @@
     --g-connector-end-color: #f97316;
     --g-connector-linking-color: #6366f1;
     --g-connector-fill: #ffffff;
+    --g-arrow-type-dropdown-bg: #ffffff;
+    --g-arrow-type-dropdown-border: #cccccc;
+    --g-arrow-type-option-hover-bg: #f0f0f0;
+    --g-arrow-type-option-active-bg: #e8e8e8;
 }

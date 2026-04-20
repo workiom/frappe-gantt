@@ -10,6 +10,7 @@ export default class Arrow {
         this.is_invalid = this.check_invalid_dependency();
         this.is_hovered = false;
         this.is_active = false;
+        this.type_dropdown = null;
 
         this.calculate_path();
         this.draw();
@@ -385,7 +386,7 @@ export default class Arrow {
         });
         this.label_element.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.hit_element.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+            this._toggle_type_dropdown();
         });
         this.gantt.layers.arrow.appendChild(this.label_element);
     }
@@ -394,6 +395,95 @@ export default class Arrow {
         if (this.label_element) {
             this.label_element.remove();
             this.label_element = null;
+        }
+    }
+
+    _show_type_dropdown() {
+        if (this.gantt.options.readonly) return;
+        if (this.type_dropdown) return;
+
+        // Activate this arrow so the badge stays visible after dropdown closes
+        if (!this.is_active) {
+            this.gantt.set_active_arrow(this);
+        }
+
+        // Bail if label_element is not available (e.g. programmatic call before hover)
+        if (!this.label_element) return;
+
+        const types = [
+            { abbr: 'FS', label: 'Finish to Start', value: 'finish-to-start' },
+            { abbr: 'SS', label: 'Start to Start',  value: 'start-to-start'  },
+            { abbr: 'FF', label: 'Finish to Finish', value: 'finish-to-finish' },
+            { abbr: 'SF', label: 'Start to Finish',  value: 'start-to-finish'  },
+        ];
+
+        this.type_dropdown = document.createElement('div');
+        this.type_dropdown.className = 'arrow-type-dropdown';
+        // Prevent outside-click handler from closing arrow when clicking inside dropdown
+        this.type_dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+        types.forEach(({ abbr, label, value }) => {
+            const row = document.createElement('div');
+            row.className = 'arrow-type-option' +
+                (value === this.dependency_type ? ' active' : '');
+            const strong = document.createElement('strong');
+            strong.textContent = abbr;
+            const span = document.createElement('span');
+            span.textContent = label;
+            row.appendChild(strong);
+            row.appendChild(span);
+            row.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.gantt.change_dependency_type(this, value);
+            });
+            this.type_dropdown.appendChild(row);
+        });
+
+        this.gantt.$container.appendChild(this.type_dropdown);
+
+        // Position below the badge using screen coordinates
+        const badge_rect = this.label_element.getBoundingClientRect();
+        const container_rect = this.gantt.$container.getBoundingClientRect();
+        this.type_dropdown.style.top =
+            (badge_rect.bottom - container_rect.top + this.gantt.$container.scrollTop) + 'px';
+        this.type_dropdown.style.left =
+            (badge_rect.left - container_rect.left + this.gantt.$container.scrollLeft) + 'px';
+
+        // Add caret to badge text and expand rect to fit
+        const text_el = this.label_element.querySelector('text');
+        const rect_el = this.label_element.querySelector('rect');
+        if (text_el) text_el.textContent = this._get_type_abbr() + ' \u25BE';
+        if (rect_el) {
+            const new_w = 34;
+            const old_w = parseFloat(rect_el.getAttribute('width'));
+            const cx = parseFloat(rect_el.getAttribute('x')) + old_w / 2;
+            rect_el.setAttribute('x', String(cx - new_w / 2));
+            rect_el.setAttribute('width', String(new_w));
+        }
+    }
+
+    _hide_type_dropdown() {
+        if (this.type_dropdown) {
+            this.type_dropdown.remove();
+            this.type_dropdown = null;
+        }
+        // Remove caret and revert badge rect to original 21px width
+        const text_el = this.label_element?.querySelector('text');
+        const rect_el = this.label_element?.querySelector('rect');
+        if (text_el) text_el.textContent = this._get_type_abbr();
+        if (rect_el) {
+            const orig_w = 21;
+            const cx = parseFloat(rect_el.getAttribute('x')) + parseFloat(rect_el.getAttribute('width')) / 2;
+            rect_el.setAttribute('x', String(cx - orig_w / 2));
+            rect_el.setAttribute('width', String(orig_w));
+        }
+    }
+
+    _toggle_type_dropdown() {
+        if (this.type_dropdown) {
+            this._hide_type_dropdown();
+        } else {
+            this._show_type_dropdown();
         }
     }
 
@@ -413,6 +503,7 @@ export default class Arrow {
     }
 
     deactivate() {
+        this._hide_type_dropdown();
         this.is_active = false;
         this.element.classList.remove('arrow-active');
         this._hide_label();

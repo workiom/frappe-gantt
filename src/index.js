@@ -2211,6 +2211,35 @@ export default class Gantt {
         }
     }
 
+    change_dependency_type(arrow, new_type) {
+        // Capture references before any mutation — update_task destroys this arrow
+        const from_task = arrow.from_task.task;
+        const to_task = arrow.to_task.task;
+        const old_type = arrow.dependency_type;
+
+        // Close dropdown first — must happen before update_task rebuilds arrows
+        arrow._hide_type_dropdown();
+
+        if (new_type === old_type) return;
+
+        // One dep per task pair is enforced by _commit_dependency; .find() is safe here.
+        const dep = to_task.dependencies.find((d) => d.id === from_task.id);
+        if (!dep) return;
+
+        // Build a fresh deps array (consistent with _commit_dependency pattern)
+        const new_deps = to_task.dependencies.map((d) =>
+            d.id === from_task.id ? { ...d, type: new_type } : d,
+        );
+
+        // Clear active_arrow before update_task destroys the old arrow instance
+        this.set_active_arrow(null);
+        this.update_task(to_task.id, { dependencies: new_deps });
+
+        if (this.options.on_dependency_changed) {
+            this.options.on_dependency_changed(from_task, to_task, old_type, new_type);
+        }
+    }
+
     get_all_dependent_tasks(task_id) {
         let out = [];
         let to_process = [task_id];
