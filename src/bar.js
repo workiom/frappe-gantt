@@ -240,7 +240,7 @@ export default class Bar {
         }
 
         const labelText = this.gantt.options.show_bar_label
-            ? (this.task.bar_label || this.task.name)
+            ? (this.task.bar_label ?? this.task.name)
             : '';
 
         this.$bar_label = createSVG('text', {

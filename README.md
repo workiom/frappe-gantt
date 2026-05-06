@@ -72,7 +72,7 @@ gantt.tasks.append(...)
 gantt.tasks.refresh()
 ```
 
-Each task object accepts an optional `bar_label` string. When set to a truthy value and the global `show_bar_label` option is `true`, the bar renders `bar_label` instead of `name`. An empty string falls back to `name`. To hide bar labels entirely, set the `show_bar_label` option to `false`.
+Each task object accepts an optional `bar_label` string. When defined (including an empty string) and the global `show_bar_label` option is `true`, the bar renders `bar_label` instead of `name`. Only `null` or `undefined` falls back to `name`. To hide bar labels entirely, set the `show_bar_label` option to `false`.
 
 ### Configuration
 
@@ -108,7 +108,7 @@ Frappe Gantt offers a wide range of options to customize your chart.
 | `readonly_dates`         | Disables editing task dates.                                  | `true`, `false`                                                                                                                                                               | `false`                                             |
 | `readonly`               | Disables all editing features.                                | `true`, `false`                                                                                                                                                               | `false`                                             |
 | `scroll_to`              | Determines the starting point when chart is rendered.         | `today`, `start`, `end`, or a date string.                                                                                                                                    | `today`                                             |
-| `show_bar_label`         | Whether to render the text label inside each task bar. When `true`, label text comes from `task.bar_label` if truthy, otherwise from `task.name`. | `true`, `false` | `true` |
+| `show_bar_label`         | Whether to render the text label inside each task bar. When `true`, label text comes from `task.bar_label` when defined (including empty string), otherwise from `task.name`. | `true`, `false` | `true` |
 | `show_expected_progress` | Shows expected progress for tasks.                            | `true`, `false`                                                                                                                                                               | `false`                                             |
 | `task_add_icon_position` | Position of the add task icon relative to task bar.           | `null` (hidden), `'before'`, `'after'`                                                                                                                                        | `null`                                              |
 | `today_button`           | Adds a button to navigate to today's date.                    | `true`, `false`                                                                                                                                                               | `true`                                              |
