@@ -154,6 +154,7 @@ const DEFAULT_OPTIONS = {
     readonly_dates: false,
     readonly: false,
     scroll_to: 'today',
+    show_bar_label: true,
     show_expected_progress: false,
     task_add_icon_position: null,
     today_button: true,

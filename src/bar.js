@@ -239,8 +239,9 @@ export default class Bar {
             x_coord = this.x + this.image_size + 5;
         }
 
-        // Hide text label when task_column is enabled
-        const labelText = this.gantt.options.task_column.enabled ? '' : this.task.name;
+        const labelText = this.gantt.options.show_bar_label
+            ? (this.task.bar_label || this.task.name)
+            : '';
 
         this.$bar_label = createSVG('text', {
             x: x_coord,

@@ -92,6 +92,20 @@
                 <div class="chart col-md-9" id="mutability"></div>
             </div>
             <div class="row my-5">
+                <div class="col-md-3 px-5 py-1">
+                    <h3 class="text-center">Bar Label Control</h3>
+                    <p>
+                        Toggle <code>show_bar_label</code> to hide all bar labels.
+                        The middle bar uses a custom <code>bar_label</code>; the
+                        bottom one has <code>bar_label: ''</code> (empty string falls back to <code>name</code>).
+                    </p>
+                    <button id="toggle-bar-label" class="btn btn-primary w-100">
+                        Toggle show_bar_label
+                    </button>
+                </div>
+                <div class="chart col-md-9" id="bar-label"></div>
+            </div>
+            <div class="row my-5">
                 <div class="chart col-md-9" id="sideheader"></div>
                 <div class="col-md-3 px-5 py-1">
                     <h3 class="text-center">Versatile Actions</h3>
@@ -922,6 +936,44 @@
                 on_task_add: (task) => {
                     alert('Task added triggered: ' + task.name);
                 },
+            });
+
+            const tasksBarLabel = [
+                {
+                    start: daysSince(-2),
+                    end: daysSince(2),
+                    name: 'Default Label Task',
+                    id: 'BL0',
+                    progress: random(),
+                },
+                {
+                    start: daysSince(3),
+                    duration: '4d',
+                    name: 'Original Name',
+                    bar_label: 'Custom Bar Label',
+                    id: 'BL1',
+                    progress: random(),
+                },
+                {
+                    start: daysSince(8),
+                    duration: '3d',
+                    name: 'Empty Label Task',
+                    bar_label: '',
+                    id: 'BL2',
+                    progress: random(),
+                },
+            ];
+
+            const barLabel = new Gantt('#bar-label', tasksBarLabel, {
+                holidays: null,
+                popup_on: null,
+                scroll_to: daysSince(-3),
+            });
+
+            document.getElementById('toggle-bar-label').addEventListener('click', () => {
+                barLabel.update_options({
+                    show_bar_label: !barLabel.options.show_bar_label,
+                });
             });
 
             const styling = new Gantt('#styling', tasksMany, {
