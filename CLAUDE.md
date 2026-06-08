@@ -39,6 +39,7 @@ This is an SVG-based Gantt chart library. Entry point is `src/index.js` which ex
 - `src/defaults.js` — `DEFAULT_OPTIONS` and `DEFAULT_VIEW_MODES` (Hour, Quarter Day, Half Day, Day, Week, Month, Year). View modes define `step`, `padding`, `upper_text`, `lower_text`, and `date_format`.
 - `src/dependency_shifting.js` — Pure-function module for dependency date shifting. Exports `compute_dependency_shifts(tasks, movedTaskId, deltaMs, mode, direction)` → `Map<taskId, deltaMs>`. `direction` is `'upstream'`, `'downstream'`, or `'both'` and controls traversal direction. Contains graph building, BFS traversal (maintain_buffer modes), and topological-sort-based conflict resolution (consume_buffer mode).
 - `src/styles/` — CSS for the gantt chart.
+- Critical path (`calculate_critical_path` in `src/index.js`, enabled by `critical_path` option) uses CPM forward/backward passes. It is **date-based** (anchored to the earliest actual task start, so real calendar gaps between bars become slack), **type-aware** (each dependency edge honors its `finish-to-start`/`start-to-start`/`finish-to-finish`/`start-to-finish` type via `resolve_type`, falling back to `dependencies_type`), and **cycle-safe** (a visiting `stack` Set turns dependency back-edges into no-ops instead of infinite recursion). A task is critical when slack (`LS - ES`) ≈ 0. An arrow is critical only when both endpoint tasks are critical (`arrow.js`).
 
 ## Documentation Rules
 

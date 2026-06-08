@@ -1123,76 +1123,120 @@ export default class Gantt {
 
     calculate_critical_path() {
         // Reset critical path flags
-        this.tasks.forEach(task => task._is_critical = false);
+        this.tasks.forEach(task => (task._is_critical = false));
+        if (this.tasks.length === 0) return;
 
-        // Calculate Early Start (ES) and Early Finish (EF) - Forward pass
-        const task_es_ef = {};
+        // Task duration in days (uses the actual placed dates)
+        const duration_of = (task) =>
+            date_utils.diff(task._end, task._start, 'hour') / 24;
+
+        // Project epoch = earliest actual start across all tasks. All times
+        // below are measured in days from this epoch so that real calendar
+        // gaps between bars show up as slack instead of being collapsed away.
+        let epoch = this.tasks[0]._start;
         this.tasks.forEach(task => {
-            task_es_ef[task.id] = { es: 0, ef: 0, ls: 0, lf: 0 };
+            if (task._start < epoch) epoch = task._start;
+        });
+        const start_offset = (task) =>
+            date_utils.diff(task._start, epoch, 'hour') / 24;
+
+        // Resolve the relationship type of a dependency edge.
+        const resolve_type = (dep) =>
+            dep.type || this.options.dependencies_type || 'finish-to-start';
+
+        // Per-task scheduling state with explicit "computed" flags so that a
+        // legitimately-zero value is never mistaken for "not yet computed".
+        const node = {};
+        this.tasks.forEach(task => {
+            node[task.id] = {
+                d: duration_of(task),
+                s: start_offset(task),
+                es: 0, ef: 0, ls: 0, lf: 0,
+                f_done: false, b_done: false,
+            };
         });
 
-        // Forward pass: Calculate ES and EF
-        const calculateES = (task) => {
-            if (task_es_ef[task.id].ef > 0) return task_es_ef[task.id];
-
-            let maxEF = 0;
-            if (task.dependencies && task.dependencies.length > 0) {
-                task.dependencies.forEach(dep => {
-                    const dep_task = this.get_task(dep.id);
-                    if (dep_task) {
-                        const dep_values = calculateES(dep_task);
-                        maxEF = Math.max(maxEF, dep_values.ef);
-                    }
-                });
-            }
-
-            task_es_ef[task.id].es = maxEF;
-            const duration = date_utils.diff(task._end, task._start, 'hour') / 24; // in days
-            task_es_ef[task.id].ef = maxEF + duration;
-
-            return task_es_ef[task.id];
-        };
-
-        // Calculate ES/EF for all tasks
-        this.tasks.forEach(task => calculateES(task));
-
-        // Find project completion time
-        const projectDuration = Math.max(...Object.values(task_es_ef).map(v => v.ef));
-
-        // Backward pass: Calculate LS and LF
-        const calculateLS = (task) => {
-            if (task_es_ef[task.id].ls > 0 || task_es_ef[task.id].lf > 0) {
-                return task_es_ef[task.id];
-            }
-
-            // Find tasks that depend on this task
-            const dependents = this.tasks.filter(t =>
-                t.dependencies && t.dependencies.some(d => d.id === task.id)
-            );
-
-            let minLS = projectDuration;
-            if (dependents.length > 0) {
-                dependents.forEach(dep_task => {
-                    const dep_values = calculateLS(dep_task);
-                    minLS = Math.min(minLS, dep_values.ls);
-                });
-            }
-
-            const duration = date_utils.diff(task._end, task._start, 'hour') / 24; // in days
-            task_es_ef[task.id].lf = minLS;
-            task_es_ef[task.id].ls = minLS - duration;
-
-            return task_es_ef[task.id];
-        };
-
-        // Calculate LS/LF for all tasks
-        this.tasks.forEach(task => calculateLS(task));
-
-        // Identify critical path: tasks where ES = LS (or slack = 0)
+        // Build successor lists (predecessors live on task.dependencies).
+        const successors = {};
+        this.tasks.forEach(task => (successors[task.id] = []));
         this.tasks.forEach(task => {
-            const values = task_es_ef[task.id];
-            const slack = values.ls - values.es;
-            task._is_critical = Math.abs(slack) < 0.01; // Use small epsilon for float comparison
+            (task.dependencies || []).forEach(dep => {
+                if (node[dep.id]) {
+                    successors[dep.id].push({ id: task.id, type: resolve_type(dep) });
+                }
+            });
+        });
+
+        // Forward pass: earliest start (ES) / earliest finish (EF).
+        // `stack` breaks dependency cycles — a back-edge is treated as no
+        // constraint rather than recursing forever.
+        const forward = (task, stack) => {
+            const n = node[task.id];
+            if (n.f_done) return n;
+            if (stack.has(task.id)) return n; // cycle guard
+            stack.add(task.id);
+
+            let es = n.s; // anchor unconstrained tasks at their real start
+            let constrained = false;
+            (task.dependencies || []).forEach(dep => {
+                const pred = this.get_task(dep.id);
+                if (!pred || !node[dep.id]) return;
+                const p = forward(pred, stack);
+                const type = resolve_type(dep);
+                let cand;
+                if (type === 'start-to-start') cand = p.es;
+                else if (type === 'finish-to-finish') cand = p.ef - n.d;
+                else if (type === 'start-to-finish') cand = p.es - n.d;
+                else cand = p.ef; // finish-to-start
+                es = constrained ? Math.max(es, cand) : cand;
+                constrained = true;
+            });
+            n.es = es;
+            n.ef = es + n.d;
+            n.f_done = true;
+            stack.delete(task.id);
+            return n;
+        };
+        this.tasks.forEach(task => forward(task, new Set()));
+
+        const projectEnd = Math.max(...this.tasks.map(t => node[t.id].ef));
+
+        // Backward pass: latest finish (LF) / latest start (LS).
+        const backward = (task, stack) => {
+            const n = node[task.id];
+            if (n.b_done) return n;
+            if (stack.has(task.id)) return n; // cycle guard
+            stack.add(task.id);
+
+            const succs = successors[task.id];
+            let lf;
+            if (succs.length === 0) {
+                lf = projectEnd;
+            } else {
+                let constrained = false;
+                succs.forEach(succ => {
+                    const s = backward(this.get_task(succ.id), stack);
+                    let cand;
+                    if (succ.type === 'start-to-start') cand = s.ls + n.d;
+                    else if (succ.type === 'finish-to-finish') cand = s.lf;
+                    else if (succ.type === 'start-to-finish') cand = s.lf + n.d;
+                    else cand = s.ls; // finish-to-start
+                    lf = constrained ? Math.min(lf, cand) : cand;
+                    constrained = true;
+                });
+            }
+            n.lf = lf;
+            n.ls = lf - n.d;
+            n.b_done = true;
+            stack.delete(task.id);
+            return n;
+        };
+        this.tasks.forEach(task => backward(task, new Set()));
+
+        // Critical = zero slack (LS == ES), within a small float epsilon.
+        this.tasks.forEach(task => {
+            const n = node[task.id];
+            task._is_critical = Math.abs(n.ls - n.es) < 0.01;
         });
     }
 
