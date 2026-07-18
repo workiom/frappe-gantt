@@ -455,7 +455,23 @@
             stroke-width: 2;
         }
 
-        &:hover .connector-circle {
+        & .connector-line {
+            opacity: 0;
+            stroke-width: 1.5;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        & .connector-line.connector-start-line {
+            stroke: var(--g-connector-start-color);
+        }
+
+        & .connector-line.connector-end-line {
+            stroke: var(--g-connector-end-color);
+        }
+
+        &:hover .connector-circle,
+        &:hover .connector-line {
             opacity: 1;
         }
     }

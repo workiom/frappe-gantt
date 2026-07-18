@@ -2,6 +2,8 @@ import date_utils from './date_utils';
 import { $, createSVG, animateSVG } from './svg_utils';
 
 export default class Bar {
+    static connector_stub = 14;
+
     constructor(gantt, task) {
         this.set_defaults(gantt, task);
         this.prepare_wrappers();
@@ -444,13 +446,35 @@ export default class Bar {
     draw_connector_circles() {
         this.$connector_start = null;
         this.$connector_end = null;
+        this.$connector_start_line = null;
+        this.$connector_end_line = null;
         if (!this.gantt.options.allow_dependency_creation) return;
         if (this.gantt.options.readonly) return;
         const isRTL = this.gantt.options.isRTL;
         const cy = this.y + this.height / 2;
-        const start_cx = isRTL ? this.x + this.width : this.x;
-        const end_cx = isRTL ? this.x : this.x + this.width;
+        const start_bx = isRTL ? this.x + this.width : this.x;
+        const end_bx = isRTL ? this.x : this.x + this.width;
+        const start_dir = isRTL ? 1 : -1;
+        const end_dir = isRTL ? -1 : 1;
+        const start_cx = start_bx + start_dir * Bar.connector_stub;
+        const end_cx = end_bx + end_dir * Bar.connector_stub;
 
+        this.$connector_start_line = createSVG('line', {
+            class: 'connector-line connector-start-line',
+            x1: start_bx,
+            y1: cy,
+            x2: start_cx,
+            y2: cy,
+            append_to: this.handle_group,
+        });
+        this.$connector_end_line = createSVG('line', {
+            class: 'connector-line connector-end-line',
+            x1: end_bx,
+            y1: cy,
+            x2: end_cx,
+            y2: cy,
+            append_to: this.handle_group,
+        });
         this.$connector_start = createSVG('circle', {
             class: 'connector-circle connector-start',
             'data-endpoint': 'start',
@@ -475,8 +499,20 @@ export default class Bar {
         const bx = this.$bar.getX();
         const bw = this.$bar.getWidth();
         const cy = this.y + this.height / 2;
-        const start_cx = isRTL ? bx + bw : bx;
-        const end_cx = isRTL ? bx : bx + bw;
+        const start_bx = isRTL ? bx + bw : bx;
+        const end_bx = isRTL ? bx : bx + bw;
+        const start_dir = isRTL ? 1 : -1;
+        const end_dir = isRTL ? -1 : 1;
+        const start_cx = start_bx + start_dir * Bar.connector_stub;
+        const end_cx = end_bx + end_dir * Bar.connector_stub;
+        this.$connector_start_line.setAttribute('x1', start_bx);
+        this.$connector_start_line.setAttribute('y1', cy);
+        this.$connector_start_line.setAttribute('x2', start_cx);
+        this.$connector_start_line.setAttribute('y2', cy);
+        this.$connector_end_line.setAttribute('x1', end_bx);
+        this.$connector_end_line.setAttribute('y1', cy);
+        this.$connector_end_line.setAttribute('x2', end_cx);
+        this.$connector_end_line.setAttribute('y2', cy);
         this.$connector_start.setAttribute('cx', start_cx);
         this.$connector_start.setAttribute('cy', cy);
         this.$connector_end.setAttribute('cx', end_cx);
