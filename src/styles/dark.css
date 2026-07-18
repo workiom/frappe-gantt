@@ -13,6 +13,8 @@
     --g-arrow-invalid-color-dark: #ff7676;
     --g-arrow-type-label-bg-dark: #4a4a4a;
     --g-arrow-type-label-color-dark: #fff;
+    --g-resize-grip-border-dark: #8a9099;
+    --g-resize-grip-line-dark: #c6ccd2;
     --g-resize-handle-hover-dark: rgba(96, 165, 250, 0.4);
     --g-resize-handle-active-dark: rgba(96, 165, 250, 0.6);
     --g-connector-start-color-dark: #4ade80;
@@ -48,6 +50,14 @@
 
     & .arrow-invalid {
         stroke: var(--g-arrow-invalid-color-dark);
+    }
+
+    & .handle:not(.progress) {
+        stroke: var(--g-row-border-color);
+    }
+
+    & .handle-grip {
+        stroke: var(--g-resize-grip-line-dark);
     }
 
     & .arrow-hover {

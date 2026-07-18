@@ -2050,8 +2050,14 @@ export default class Gantt {
             this.linking_source_bar = source_bar;
             this.linking_source_endpoint = circle.getAttribute('data-endpoint');
 
-            const cx = parseFloat(circle.getAttribute('cx'));
-            const cy = parseFloat(circle.getAttribute('cy'));
+            // Anchor the temp line at the bar edge, not the pushed-out circle.
+            const isRTL = this.options.isRTL;
+            const b = source_bar;
+            const start_bx = isRTL ? b.x + b.width : b.x;
+            const end_bx = isRTL ? b.x : b.x + b.width;
+            const cx =
+                this.linking_source_endpoint === 'start' ? start_bx : end_bx;
+            const cy = b.y + b.height / 2;
 
             this.linking_temp_line = createSVG('line', {
                 x1: cx,

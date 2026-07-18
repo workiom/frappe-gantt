@@ -13,7 +13,9 @@
     --g-text-light: #fff;
     --g-text-dark: #171717;
     --g-progress-color: #dbdbdb;
-    --g-handle-color: transparent;
+    --g-handle-color: #ffffff;
+    --g-resize-grip-border: #9ba1a9;
+    --g-resize-grip-line: #6b7178;
     --g-weekend-label-color: #dcdce4;
     --g-expected-progress: #c4c4e9;
     --g-header-background: #fff;

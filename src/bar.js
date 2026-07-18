@@ -2,7 +2,8 @@ import date_utils from './date_utils';
 import { $, createSVG, animateSVG } from './svg_utils';
 
 export default class Bar {
-    static connector_stub = 14;
+    static connector_stub = 18;
+    static handle_width = 10;
 
     constructor(gantt, task) {
         this.set_defaults(gantt, task);
@@ -101,6 +102,7 @@ export default class Bar {
     }
 
     draw() {
+        this.draw_hover_region();
         this.draw_bar();
         this.draw_progress_bar();
         if (this.gantt.options.show_expected_progress) {
@@ -396,33 +398,21 @@ export default class Bar {
         if (this.invalid || this.gantt.options.readonly) return;
 
         const bar = this.$bar;
-        const handle_width = 8;
+        const box_width = Bar.handle_width;
+        // Extend the grip inward by the bar's corner radius so it paints over
+        // the bar's rounded corner (no notch showing between handle and bar).
+        const overlap = this.corner_radius;
+        const box_height = this.height;
+        const box_y = bar.getY();
         this.handles = [];
         if (!this.gantt.options.readonly_dates) {
+            const right_x = bar.getEndX() - overlap;
+            const left_x = bar.getX() - box_width;
             this.handles.push(
-                createSVG('rect', {
-                    x: bar.getEndX() - handle_width,
-                    y: bar.getY() + (this.height - this.height * 0.8) / 2,
-                    width: handle_width,
-                    height: this.height * 0.8,
-                    rx: 2,
-                    ry: 2,
-                    class: 'handle right',
-                    append_to: this.handle_group,
-                }),
+                this.draw_grip_handle(right_x, box_y, box_width, box_height, 'right', overlap),
             );
-
             this.handles.push(
-                createSVG('rect', {
-                    x: bar.getX() - handle_width,
-                    y: bar.getY() + (this.height - this.height * 0.8) / 2,
-                    width: handle_width,
-                    height: this.height * 0.8,
-                    rx: 2,
-                    ry: 2,
-                    class: 'handle left',
-                    append_to: this.handle_group,
-                }),
+                this.draw_grip_handle(left_x, box_y, box_width, box_height, 'left', overlap),
             );
         }
         if (!this.gantt.options.readonly_progress) {
@@ -443,6 +433,98 @@ export default class Bar {
         }
     }
 
+    draw_grip_handle(box_x, box_y, box_width, box_height, side, overlap = 0) {
+        const radius = this.corner_radius;
+        // Full box includes the inward overlap that covers the bar corner.
+        const full_width = box_width + overlap;
+        const box = createSVG('path', {
+            d: Bar.grip_path(box_x, box_y, full_width, box_height, radius, side),
+            class: `handle ${side}`,
+            append_to: this.handle_group,
+        });
+        // Store geometry so the path can be rebuilt on reposition.
+        box.grip_geo = {
+            y: box_y,
+            w: full_width,
+            h: box_height,
+            r: radius,
+            side,
+            overlap,
+            visible_w: box_width,
+        };
+        const grip_x = Bar.grip_center(box_x, box.grip_geo);
+        const grip_line = createSVG('line', {
+            x1: grip_x,
+            y1: box_y + box_height * 0.25,
+            x2: grip_x,
+            y2: box_y + box_height * 0.75,
+            class: 'handle-grip',
+            append_to: this.handle_group,
+        });
+        box.grip_line = grip_line;
+        return box;
+    }
+
+    // Center the grip line on the full handle box. The overlap is painted
+    // over the bar, so it is part of the visible box and must be included.
+    static grip_center(box_x, geo) {
+        return box_x + geo.w / 2;
+    }
+
+    // Closed box: rounded on the two outer corners (matching the bar radius),
+    // square on the inner edge. The stroked inner edge is the seam/border
+    // between the handle and the bar. Left handle rounds its left corners,
+    // right handle rounds its right corners.
+    static grip_path(x, y, w, h, r, side) {
+        if (side === 'left') {
+            return `M ${x + w} ${y} H ${x + r} A ${r} ${r} 0 0 0 ${x} ${y + r} V ${y + h - r} A ${r} ${r} 0 0 0 ${x + r} ${y + h} H ${x + w} Z`;
+        }
+        return `M ${x} ${y} H ${x + w - r} A ${r} ${r} 0 0 1 ${x + w} ${y + r} V ${y + h - r} A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} H ${x} Z`;
+    }
+
+    // Invisible rect spanning from the left connector circle to the right
+    // connector circle, kept at the bottom of the wrapper so the bar, handles
+    // and circles still receive their own events. It fills the stub gaps so
+    // moving the pointer from the bar out to a pushed-out circle never leaves
+    // the wrapper's hover region.
+    connector_hover_bounds() {
+        const isRTL = this.gantt.options.isRTL;
+        const bx = this.$bar ? this.$bar.getX() : this.x;
+        const bw = this.$bar ? this.$bar.getWidth() : this.width;
+        const start_bx = isRTL ? bx + bw : bx;
+        const end_bx = isRTL ? bx : bx + bw;
+        const start_dir = isRTL ? 1 : -1;
+        const end_dir = isRTL ? -1 : 1;
+        const start_cx = start_bx + start_dir * Bar.connector_stub;
+        const end_cx = end_bx + end_dir * Bar.connector_stub;
+        const r = 4;
+        const left = Math.min(start_cx, end_cx) - r;
+        const right = Math.max(start_cx, end_cx) + r;
+        return { x: left, width: right - left };
+    }
+
+    draw_hover_region() {
+        this.$hover_region = null;
+        if (!this.gantt.options.allow_dependency_creation) return;
+        if (this.gantt.options.readonly) return;
+        const { x, width } = this.connector_hover_bounds();
+        this.$hover_region = createSVG('rect', {
+            class: 'bar-hover-region',
+            x,
+            y: this.y,
+            width,
+            height: this.height,
+            append_to: this.bar_group,
+        });
+    }
+
+    update_hover_region() {
+        if (!this.$hover_region) return;
+        const { x, width } = this.connector_hover_bounds();
+        this.$hover_region.setAttribute('x', x);
+        this.$hover_region.setAttribute('width', width);
+    }
+
     draw_connector_circles() {
         this.$connector_start = null;
         this.$connector_end = null;
@@ -456,12 +538,19 @@ export default class Bar {
         const end_bx = isRTL ? this.x : this.x + this.width;
         const start_dir = isRTL ? 1 : -1;
         const end_dir = isRTL ? -1 : 1;
+        // Start the connector line at the outer edge of the resize handle
+        // (if any) so it doesn't overlap the grip.
+        const handle_extent = this.gantt.options.readonly_dates
+            ? 0
+            : Bar.handle_width;
+        const start_lx = start_bx + start_dir * handle_extent;
+        const end_lx = end_bx + end_dir * handle_extent;
         const start_cx = start_bx + start_dir * Bar.connector_stub;
         const end_cx = end_bx + end_dir * Bar.connector_stub;
 
         this.$connector_start_line = createSVG('line', {
             class: 'connector-line connector-start-line',
-            x1: start_bx,
+            x1: start_lx,
             y1: cy,
             x2: start_cx,
             y2: cy,
@@ -469,7 +558,7 @@ export default class Bar {
         });
         this.$connector_end_line = createSVG('line', {
             class: 'connector-line connector-end-line',
-            x1: end_bx,
+            x1: end_lx,
             y1: cy,
             x2: end_cx,
             y2: cy,
@@ -494,6 +583,7 @@ export default class Bar {
     }
 
     update_connector_circles() {
+        this.update_hover_region();
         if (!this.$connector_start) return;
         const isRTL = this.gantt.options.isRTL;
         const bx = this.$bar.getX();
@@ -503,13 +593,18 @@ export default class Bar {
         const end_bx = isRTL ? bx : bx + bw;
         const start_dir = isRTL ? 1 : -1;
         const end_dir = isRTL ? -1 : 1;
+        const handle_extent = this.gantt.options.readonly_dates
+            ? 0
+            : Bar.handle_width;
+        const start_lx = start_bx + start_dir * handle_extent;
+        const end_lx = end_bx + end_dir * handle_extent;
         const start_cx = start_bx + start_dir * Bar.connector_stub;
         const end_cx = end_bx + end_dir * Bar.connector_stub;
-        this.$connector_start_line.setAttribute('x1', start_bx);
+        this.$connector_start_line.setAttribute('x1', start_lx);
         this.$connector_start_line.setAttribute('y1', cy);
         this.$connector_start_line.setAttribute('x2', start_cx);
         this.$connector_start_line.setAttribute('y2', cy);
-        this.$connector_end_line.setAttribute('x1', end_bx);
+        this.$connector_end_line.setAttribute('x1', end_lx);
         this.$connector_end_line.setAttribute('y1', cy);
         this.$connector_end_line.setAttribute('x2', end_cx);
         this.$connector_end_line.setAttribute('y2', cy);
@@ -1008,14 +1103,29 @@ export default class Bar {
     update_handle_position() {
         if (this.invalid || this.gantt.options.readonly) return;
         const bar = this.$bar;
-        this.handle_group
-            .querySelector('.handle.left')
-            .setAttribute('x', bar.getX());
-        this.handle_group
-            .querySelector('.handle.right')
-            .setAttribute('x', bar.getEndX());
+        const box_width = Bar.handle_width;
+        const overlap = this.corner_radius;
+        const left = this.handle_group.querySelector('.handle.left');
+        const right = this.handle_group.querySelector('.handle.right');
+        if (left) this.reposition_grip_handle(left, bar.getX() - box_width);
+        if (right) this.reposition_grip_handle(right, bar.getEndX() - overlap);
         const handle = this.group.querySelector('.handle.progress');
         handle && handle.setAttribute('cx', this.$bar_progress.getEndX());
+    }
+
+    reposition_grip_handle(box, box_x) {
+        const geo = box.grip_geo;
+        if (!geo) return;
+        box.setAttribute(
+            'd',
+            Bar.grip_path(box_x, geo.y, geo.w, geo.h, geo.r, geo.side),
+        );
+        const grip_line = box.grip_line;
+        if (grip_line) {
+            const grip_x = Bar.grip_center(box_x, geo);
+            grip_line.setAttribute('x1', grip_x);
+            grip_line.setAttribute('x2', grip_x);
+        }
     }
 
     update_add_icon_position() {
