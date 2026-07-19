@@ -1547,11 +1547,11 @@ export default class Gantt {
 
         let ok;
         try {
-            ok = await this.options.on_date_change_request(
+            ok = await this.trigger_event('date_change_request', [
                 task,
                 new_start,
                 new_end,
-            );
+            ]);
         } catch (e) {
             return; // callback threw → leave task unchanged
         }
@@ -2625,7 +2625,7 @@ export default class Gantt {
 
     trigger_event(event, args) {
         if (this.options['on_' + event]) {
-            this.options['on_' + event].apply(this, args);
+            return this.options['on_' + event].apply(this, args);
         }
     }
 
