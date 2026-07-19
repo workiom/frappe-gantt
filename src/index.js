@@ -294,7 +294,7 @@ export default class Gantt {
 
     update_task(id, new_details) {
         let task = this.tasks.find((t) => t.id === id);
-        let bar = this.bars[task._index];
+        let bar = this.get_bar(task.id);
 
         // Check if dependencies are being updated
         const dependenciesChanged = new_details.dependencies !== undefined;
@@ -324,7 +324,7 @@ export default class Gantt {
             this.map_arrows_on_bars();
         }
 
-        bar.refresh();
+        if (bar) bar.refresh();
     }
 
     change_view_mode(mode = this.options.view_mode, maintain_pos = false) {
@@ -1101,8 +1101,8 @@ export default class Gantt {
                     const dependency = this.get_task(dep.id);
                     if (!dependency) return;
 
-                    const from_bar = this.bars[dependency._index];
-                    const to_bar = this.bars[task._index];
+                    const from_bar = this.get_bar(dependency.id);
+                    const to_bar = this.get_bar(task.id);
                     if (!from_bar || !to_bar) return;
 
                     const resolved_type = dep.type || this.options.dependencies_type || 'finish-to-start';
