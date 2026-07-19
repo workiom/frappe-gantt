@@ -115,10 +115,7 @@ export default class Gantt {
             let setting = this.options[CSS_VARIABLES[name]];
             if (setting !== 'auto') {
                 // Set on both wrapper and container for accessibility
-                this.$wrapper.style.setProperty(
-                    '--gv-' + name,
-                    setting + 'px',
-                );
+                this.$wrapper.style.setProperty('--gv-' + name, setting + 'px');
                 this.$container.style.setProperty(
                     '--gv-' + name,
                     setting + 'px',
@@ -178,7 +175,7 @@ export default class Gantt {
                         // Task has no dates - only show if task column is enabled
                         if (!this.options.task_column?.enabled) {
                             console.warn(
-                                `task "${task.id || task.name}" has no dates and will be hidden (task column is disabled)`
+                                `task "${task.id || task.name}" has no dates and will be hidden (task column is disabled)`,
                             );
                             return false;
                         }
@@ -197,7 +194,9 @@ export default class Gantt {
                             return false;
                         }
                         if (!task.end && !task.duration) {
-                            console.error(`task "${task.id}" doesn't have an end date`);
+                            console.error(
+                                `task "${task.id}" doesn't have an end date`,
+                            );
                             return false;
                         }
                     }
@@ -213,7 +212,11 @@ export default class Gantt {
                         durations.forEach((tmpDuration) => {
                             let { duration, scale } =
                                 date_utils.parse_duration(tmpDuration);
-                            task.end = date_utils.add(task.end, duration, scale);
+                            task.end = date_utils.add(
+                                task.end,
+                                duration,
+                                scale,
+                            );
                         });
                     }
                     task._end = date_utils.parse(task.end);
@@ -239,16 +242,23 @@ export default class Gantt {
 
                     // if hours is not set, assume the last day is full day
                     // e.g: 2018-09-09 becomes 2018-09-09 23:59:59
-                    const task_end_values = date_utils.get_date_values(task._end);
+                    const task_end_values = date_utils.get_date_values(
+                        task._end,
+                    );
                     if (task_end_values.slice(3).every((d) => d === 0)) {
                         task._end = date_utils.add(task._end, 24, 'hour');
                     }
                 }
 
                 // dependencies — must be an array of { id, type? } objects
-                if (typeof task.dependencies === 'string' ||
-                    (Array.isArray(task.dependencies) && task.dependencies.some((d) => typeof d === 'string'))) {
-                    console.warn(`[frappe-gantt] Task "${task.id}": dependencies must be an array of {id, type?} objects. String format is no longer supported.`);
+                if (
+                    typeof task.dependencies === 'string' ||
+                    (Array.isArray(task.dependencies) &&
+                        task.dependencies.some((d) => typeof d === 'string'))
+                ) {
+                    console.warn(
+                        `[frappe-gantt] Task "${task.id}": dependencies must be an array of {id, type?} objects. String format is no longer supported.`,
+                    );
                 }
                 if (!Array.isArray(task.dependencies)) {
                     task.dependencies = [];
@@ -664,7 +674,7 @@ export default class Gantt {
         const row_height = this.options.bar_height + this.options.padding;
         const total_content_height = Math.max(
             this.tasks.length * row_height,
-            this.grid_height - this.config.header_height
+            this.grid_height - this.config.header_height,
         );
         this.$task_column_content.style.minHeight = total_content_height + 'px';
 
@@ -695,7 +705,10 @@ export default class Gantt {
             $row.style.height = row_height + 'px';
 
             // Use custom content function if provided, otherwise default to task name
-            if (this.options.task_column.content && typeof this.options.task_column.content === 'function') {
+            if (
+                this.options.task_column.content &&
+                typeof this.options.task_column.content === 'function'
+            ) {
                 const customContent = this.options.task_column.content(task);
 
                 // Handle both string HTML and DOM elements
@@ -713,8 +726,7 @@ export default class Gantt {
         });
 
         // Set column width
-        this.$task_column.style.width =
-            this.options.task_column.width + 'px';
+        this.$task_column.style.width = this.options.task_column.width + 'px';
 
         // Create resize handle
         this.$task_column_resize_handle = this.create_el({
@@ -1074,15 +1086,17 @@ export default class Gantt {
     }
 
     make_bars() {
-        this.bars = this.tasks.map((task) => {
-            // Skip rendering bar for tasks without dates
-            if (task._has_no_dates) {
-                return null;
-            }
-            const bar = new Bar(this, task);
-            this.layers.bar.appendChild(bar.group);
-            return bar;
-        }).filter(bar => bar !== null);
+        this.bars = this.tasks
+            .map((task) => {
+                // Skip rendering bar for tasks without dates
+                if (task._has_no_dates) {
+                    return null;
+                }
+                const bar = new Bar(this, task);
+                this.layers.bar.appendChild(bar.group);
+                return bar;
+            })
+            .filter((bar) => bar !== null);
     }
 
     make_arrows() {
@@ -1105,7 +1119,10 @@ export default class Gantt {
                     const to_bar = this.get_bar(task.id);
                     if (!from_bar || !to_bar) return;
 
-                    const resolved_type = dep.type || this.options.dependencies_type || 'finish-to-start';
+                    const resolved_type =
+                        dep.type ||
+                        this.options.dependencies_type ||
+                        'finish-to-start';
                     const arrow = new Arrow(
                         this,
                         from_bar,
@@ -1123,7 +1140,7 @@ export default class Gantt {
 
     calculate_critical_path() {
         // Reset critical path flags
-        this.tasks.forEach(task => (task._is_critical = false));
+        this.tasks.forEach((task) => (task._is_critical = false));
         if (this.tasks.length === 0) return;
 
         // Task duration in days (uses the actual placed dates)
@@ -1134,7 +1151,7 @@ export default class Gantt {
         // below are measured in days from this epoch so that real calendar
         // gaps between bars show up as slack instead of being collapsed away.
         let epoch = this.tasks[0]._start;
-        this.tasks.forEach(task => {
+        this.tasks.forEach((task) => {
             if (task._start < epoch) epoch = task._start;
         });
         const start_offset = (task) =>
@@ -1147,22 +1164,29 @@ export default class Gantt {
         // Per-task scheduling state with explicit "computed" flags so that a
         // legitimately-zero value is never mistaken for "not yet computed".
         const node = {};
-        this.tasks.forEach(task => {
+        this.tasks.forEach((task) => {
             node[task.id] = {
                 d: duration_of(task),
                 s: start_offset(task),
-                es: 0, ef: 0, ls: 0, lf: 0,
-                f_done: false, b_done: false,
+                es: 0,
+                ef: 0,
+                ls: 0,
+                lf: 0,
+                f_done: false,
+                b_done: false,
             };
         });
 
         // Build successor lists (predecessors live on task.dependencies).
         const successors = {};
-        this.tasks.forEach(task => (successors[task.id] = []));
-        this.tasks.forEach(task => {
-            (task.dependencies || []).forEach(dep => {
+        this.tasks.forEach((task) => (successors[task.id] = []));
+        this.tasks.forEach((task) => {
+            (task.dependencies || []).forEach((dep) => {
                 if (node[dep.id]) {
-                    successors[dep.id].push({ id: task.id, type: resolve_type(dep) });
+                    successors[dep.id].push({
+                        id: task.id,
+                        type: resolve_type(dep),
+                    });
                 }
             });
         });
@@ -1178,7 +1202,7 @@ export default class Gantt {
 
             let es = n.s; // anchor unconstrained tasks at their real start
             let constrained = false;
-            (task.dependencies || []).forEach(dep => {
+            (task.dependencies || []).forEach((dep) => {
                 const pred = this.get_task(dep.id);
                 if (!pred || !node[dep.id]) return;
                 const p = forward(pred, stack);
@@ -1197,9 +1221,9 @@ export default class Gantt {
             stack.delete(task.id);
             return n;
         };
-        this.tasks.forEach(task => forward(task, new Set()));
+        this.tasks.forEach((task) => forward(task, new Set()));
 
-        const projectEnd = Math.max(...this.tasks.map(t => node[t.id].ef));
+        const projectEnd = Math.max(...this.tasks.map((t) => node[t.id].ef));
 
         // Backward pass: latest finish (LF) / latest start (LS).
         const backward = (task, stack) => {
@@ -1214,7 +1238,7 @@ export default class Gantt {
                 lf = projectEnd;
             } else {
                 let constrained = false;
-                succs.forEach(succ => {
+                succs.forEach((succ) => {
                     const s = backward(this.get_task(succ.id), stack);
                     let cand;
                     if (succ.type === 'start-to-start') cand = s.ls + n.d;
@@ -1231,10 +1255,10 @@ export default class Gantt {
             stack.delete(task.id);
             return n;
         };
-        this.tasks.forEach(task => backward(task, new Set()));
+        this.tasks.forEach((task) => backward(task, new Set()));
 
         // Critical = zero slack (LS == ES), within a small float epsilon.
-        this.tasks.forEach(task => {
+        this.tasks.forEach((task) => {
             const n = node[task.id];
             task._is_critical = Math.abs(n.ls - n.es) < 0.01;
         });
@@ -1242,9 +1266,10 @@ export default class Gantt {
 
     update_arrow_critical_path() {
         // Update arrow styling based on new critical path calculation
-        this.arrows.forEach(arrow => {
-            const is_critical = arrow.from_task.task._is_critical === true &&
-                              arrow.to_task.task._is_critical === true;
+        this.arrows.forEach((arrow) => {
+            const is_critical =
+                arrow.from_task.task._is_critical === true &&
+                arrow.to_task.task._is_critical === true;
 
             if (is_critical) {
                 arrow.element.classList.add('arrow-critical');
@@ -1400,34 +1425,50 @@ export default class Gantt {
             '.grid-row, .grid-header, .ignored-bar, .holiday-highlight',
             (e, delegatedTarget) => {
                 // Check if click is on a grid-row (not header or other elements)
-                if (delegatedTarget && (delegatedTarget.classList.contains('grid-row') || delegatedTarget.classList.contains('ignored-bar') || delegatedTarget.classList.contains('holiday-highlight'))) {
+                if (
+                    delegatedTarget &&
+                    (delegatedTarget.classList.contains('grid-row') ||
+                        delegatedTarget.classList.contains('ignored-bar') ||
+                        delegatedTarget.classList.contains('holiday-highlight'))
+                ) {
                     // Get the click position relative to the SVG
                     const svg = this.$svg;
                     const pt = svg.createSVGPoint();
                     pt.x = e.clientX;
                     pt.y = e.clientY;
-                    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+                    const svgP = pt.matrixTransform(
+                        svg.getScreenCTM().inverse(),
+                    );
 
                     // Calculate which row was clicked
-                    const row_height = this.options.bar_height + this.options.padding;
-                    const clicked_row_index = Math.floor((svgP.y - this.config.header_height) / row_height);
+                    const row_height =
+                        this.options.bar_height + this.options.padding;
+                    const clicked_row_index = Math.floor(
+                        (svgP.y - this.config.header_height) / row_height,
+                    );
 
                     // Check if this row corresponds to a task without dates
                     const task = this.tasks[clicked_row_index];
                     if (task && task._has_no_dates) {
                         // Calculate which date was clicked
                         const x_in_units = svgP.x / this.config.column_width;
-                        const units_from_start = Math.floor(x_in_units * this.config.step);
+                        const units_from_start = Math.floor(
+                            x_in_units * this.config.step,
+                        );
                         const clicked_date = date_utils.add(
                             this.gantt_start,
                             units_from_start,
-                            this.config.unit
+                            this.config.unit,
                         );
 
                         // If weekend/ignored skipping is enabled, advance to next non-ignored day
                         if (this.config.ignored_function) {
                             while (this.config.ignored_function(clicked_date)) {
-                                clicked_date = date_utils.add(clicked_date, 1, 'day');
+                                clicked_date = date_utils.add(
+                                    clicked_date,
+                                    1,
+                                    'day',
+                                );
                             }
                         }
 
@@ -1447,14 +1488,14 @@ export default class Gantt {
                         this.trigger_event('date_change', [
                             task,
                             task._start,
-                            task._end
+                            task._end,
                         ]);
 
                         // Trigger after_date_change event (for bar creation)
                         this.trigger_event('after_date_change', [
                             task,
                             task._start,
-                            task._end
+                            task._end,
                         ]);
 
                         return; // Don't unselect or hide popup for this case
@@ -1774,43 +1815,62 @@ export default class Gantt {
                 tasks_changed.push({
                     task: bar.task,
                     start: bar.task._start,
-                    end: date_utils.add(bar.task._end, -1, 'second')
+                    end: date_utils.add(bar.task._end, -1, 'second'),
                 });
             });
 
             // Recalculate critical path if enabled and any bar was moved
-            if (this.options.critical_path && bars.some(bar => bar.$bar.finaldx)) {
+            if (
+                this.options.critical_path &&
+                bars.some((bar) => bar.$bar.finaldx)
+            ) {
                 this.calculate_critical_path();
                 this.update_arrow_critical_path();
             }
 
             // Apply dependency shifting
-            if (tasks_changed.length > 0 && this.options.dependency_shifting !== 'none') {
+            if (
+                tasks_changed.length > 0 &&
+                this.options.dependency_shifting !== 'none'
+            ) {
                 // Derive shift direction based on mode and interaction type
                 const _mode = this.options.dependency_shifting;
                 let direction;
                 if (is_resizing_left) {
                     // maintain_buffer_downstream: left-resize does nothing
-                    direction = _mode === 'maintain_buffer_downstream' ? 'none' : 'upstream';
+                    direction =
+                        _mode === 'maintain_buffer_downstream'
+                            ? 'none'
+                            : 'upstream';
                 } else if (is_resizing_right) {
                     direction = 'downstream';
                 } else {
                     // drag: maintain_buffer_downstream pushes downstream only;
                     // maintain_buffer_all and consume_buffer propagate both ways
-                    direction = _mode === 'maintain_buffer_downstream' ? 'downstream' : 'both';
+                    direction =
+                        _mode === 'maintain_buffer_downstream'
+                            ? 'downstream'
+                            : 'both';
                 }
                 tasks_changed.forEach(({ task }) => {
                     if (direction === 'none') return;
                     const dragged_bar = bars.find((b) => b.task.id === task.id);
                     if (!dragged_bar || !dragged_bar.$bar.finaldx) return;
 
-                    const units_moved = dragged_bar.$bar.finaldx / this.config.column_width;
+                    const units_moved =
+                        dragged_bar.$bar.finaldx / this.config.column_width;
                     const ms_per_unit =
-                        this.config.unit === 'hour'  ? 3600000 :
-                        this.config.unit === 'day'   ? 86400000 :
-                        this.config.unit === 'month' ? 30 * 86400000 :
-                        this.config.unit === 'year'  ? 365 * 86400000 : 86400000;
-                    const deltaMs = units_moved * this.config.step * ms_per_unit;
+                        this.config.unit === 'hour'
+                            ? 3600000
+                            : this.config.unit === 'day'
+                              ? 86400000
+                              : this.config.unit === 'month'
+                                ? 30 * 86400000
+                                : this.config.unit === 'year'
+                                  ? 365 * 86400000
+                                  : 86400000;
+                    const deltaMs =
+                        units_moved * this.config.step * ms_per_unit;
 
                     const shift_map = compute_dependency_shifts(
                         this.tasks,
@@ -1825,9 +1885,15 @@ export default class Gantt {
                         if (!affected_bar) return;
 
                         const affected_task = affected_bar.task;
-                        const new_start = new Date(affected_task._start.getTime() + shiftMs);
+                        const new_start = new Date(
+                            affected_task._start.getTime() + shiftMs,
+                        );
                         const new_x =
-                            (date_utils.diff(new_start, this.gantt_start, this.config.unit) /
+                            (date_utils.diff(
+                                new_start,
+                                this.gantt_start,
+                                this.config.unit,
+                            ) /
                                 this.config.step) *
                             this.config.column_width;
 
@@ -1845,14 +1911,16 @@ export default class Gantt {
 
             // Trigger on_after_date_change for all tasks that changed
             if (tasks_changed.length > 0) {
-                tasks_changed.forEach(({task, start, end}) => {
+                tasks_changed.forEach(({ task, start, end }) => {
                     this.trigger_event('after_date_change', [task, start, end]);
                 });
             }
 
             // Reset finaldx so subsequent mouseup events (e.g. from scrolling)
             // don't re-trigger date changes or dependency shifting
-            bars.forEach((bar) => { bar.$bar.finaldx = 0; });
+            bars.forEach((bar) => {
+                bar.$bar.finaldx = 0;
+            });
 
             // Reset drag flags after handling callbacks
             is_dragging = false;
@@ -1930,7 +1998,9 @@ export default class Gantt {
             this.$task_column.classList.remove('resizing');
 
             // Trigger resize complete event
-            this.trigger_event('task_after_column_resize', [this.options.task_column.width]);
+            this.trigger_event('task_after_column_resize', [
+                this.options.task_column.width,
+            ]);
         });
     }
 
@@ -2038,6 +2108,7 @@ export default class Gantt {
         this.linking_source_endpoint = null;
         this.linking_temp_line = null;
         this.linking_snap_badge = null;
+        this.linking_hover_circle = null;
 
         $.on(this.$svg, 'mousedown', '.connector-circle', (e, circle) => {
             const bar_wrapper = $.closest('.bar-wrapper', circle);
@@ -2071,72 +2142,25 @@ export default class Gantt {
 
         $.on(this.$svg, 'mousemove', (e) => {
             if (!this.is_linking || !this.linking_temp_line) return;
-            const pt = this.$svg.createSVGPoint();
-            pt.x = e.clientX;
-            pt.y = e.clientY;
-            const svgP = pt.matrixTransform(this.$svg.getScreenCTM().inverse());
-            this.linking_temp_line.setAttribute('x2', svgP.x);
-            this.linking_temp_line.setAttribute('y2', svgP.y);
+            const { x, y } = this._svg_point(e);
+            this.linking_temp_line.setAttribute('x2', x);
+            this.linking_temp_line.setAttribute('y2', y);
+            this._update_link_hover(this._resolve_link_target(e, x));
         });
 
-        $.on(this.$svg, 'mouseover', '.connector-circle', (e, circle) => {
+        // Commit when releasing over a target: a connector circle, or
+        // anywhere on a bar body (nearest endpoint wins — the bar is split at
+        // its midpoint into a start half and an end half).
+        $.on(this.$svg, 'mouseup', (e) => {
             if (!this.is_linking) return;
-            const bar_wrapper = $.closest('.bar-wrapper', circle);
-            if (!bar_wrapper) return;
-            const bar_id = bar_wrapper.getAttribute('data-id');
-            if (bar_id === this.linking_source_bar.task.id) return;
-
-            circle.setAttribute('r', '9');
-            if (this.linking_temp_line) {
-                this.linking_temp_line.classList.add('snap');
+            const target = this._resolve_link_target(e);
+            if (target && target.bar) {
+                this._commit_dependency(target.bar, target.endpoint);
             }
-
-            if (!this.linking_snap_badge) {
-                const to_ep = circle.getAttribute('data-endpoint');
-                const type = this._resolve_dependency_type(
-                    this.linking_source_endpoint,
-                    to_ep,
-                );
-                const abbr = { 'finish-to-start': 'FS', 'start-to-start': 'SS', 'finish-to-finish': 'FF', 'start-to-finish': 'SF' }[type] || 'FS';
-                const cx = parseFloat(circle.getAttribute('cx'));
-                const cy = parseFloat(circle.getAttribute('cy'));
-                this.linking_snap_badge = createSVG('text', {
-                    x: cx + 12,
-                    y: cy - 10,
-                    class: 'linking-snap-badge',
-                    append_to: this.layers.linking,
-                });
-                this.linking_snap_badge.textContent = abbr;
-            }
+            this._cancel_linking();
         });
 
-        $.on(this.$svg, 'mouseout', '.connector-circle', (e, circle) => {
-            if (!this.is_linking) return;
-            circle.setAttribute('r', '4');
-            if (this.linking_temp_line) {
-                this.linking_temp_line.classList.remove('snap');
-            }
-            if (this.linking_snap_badge) {
-                this.linking_snap_badge.remove();
-                this.linking_snap_badge = null;
-            }
-        });
-
-        $.on(this.$svg, 'mouseup', '.connector-circle', (e, circle) => {
-            if (!this.is_linking) return;
-            const bar_wrapper = $.closest('.bar-wrapper', circle);
-            if (!bar_wrapper) return;
-            const bar_id = bar_wrapper.getAttribute('data-id');
-            if (bar_id !== this.linking_source_bar.task.id) {
-                const to_bar = this.get_bar(bar_id);
-                const to_endpoint = circle.getAttribute('data-endpoint');
-                if (to_bar) {
-                    this._commit_dependency(to_bar, to_endpoint);
-                }
-            }
-            // _cancel_linking() is called by the document mouseup handler
-        });
-
+        // Safety net: releasing outside the chart still cancels the drag.
         document.addEventListener('mouseup', () => {
             if (!this.is_linking) return;
             this._cancel_linking();
@@ -2148,7 +2172,12 @@ export default class Gantt {
                 this.active_arrow
             ) {
                 const tag = e.target.tagName;
-                if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+                if (
+                    tag === 'INPUT' ||
+                    tag === 'TEXTAREA' ||
+                    e.target.isContentEditable
+                )
+                    return;
                 e.preventDefault();
                 this.delete_dependency(this.active_arrow);
             }
@@ -2156,10 +2185,14 @@ export default class Gantt {
     }
 
     _resolve_dependency_type(from_endpoint, to_endpoint) {
-        if (from_endpoint === 'end' && to_endpoint === 'start') return 'finish-to-start';
-        if (from_endpoint === 'start' && to_endpoint === 'start') return 'start-to-start';
-        if (from_endpoint === 'end' && to_endpoint === 'end') return 'finish-to-finish';
-        if (from_endpoint === 'start' && to_endpoint === 'end') return 'start-to-finish';
+        if (from_endpoint === 'end' && to_endpoint === 'start')
+            return 'finish-to-start';
+        if (from_endpoint === 'start' && to_endpoint === 'start')
+            return 'start-to-start';
+        if (from_endpoint === 'end' && to_endpoint === 'end')
+            return 'finish-to-finish';
+        if (from_endpoint === 'start' && to_endpoint === 'end')
+            return 'start-to-finish';
         return 'finish-to-start';
     }
 
@@ -2172,9 +2205,13 @@ export default class Gantt {
         );
 
         // Find any existing dependency from the same source task (any type)
-        const existing = to_task.dependencies.find((d) => d.id === from_task.id);
+        const existing = to_task.dependencies.find(
+            (d) => d.id === from_task.id,
+        );
         const existing_type = existing
-            ? existing.type || this.options.dependencies_type || 'finish-to-start'
+            ? existing.type ||
+              this.options.dependencies_type ||
+              'finish-to-start'
             : null;
 
         // Remove existing connection between this pair (if any)
@@ -2184,7 +2221,9 @@ export default class Gantt {
 
         if (existing_type === type) {
             // Same type drawn again — toggle off (just remove)
-            this.update_task(to_task.id, { dependencies: deps_without_existing });
+            this.update_task(to_task.id, {
+                dependencies: deps_without_existing,
+            });
             if (this.options.on_dependency_delete) {
                 this.options.on_dependency_delete(from_task, to_task, type);
             }
@@ -2192,15 +2231,25 @@ export default class Gantt {
         }
 
         // Remove reverse dependency if it exists (prevents cycles)
-        const reverse = from_task.dependencies?.find((d) => d.id === to_task.id);
+        const reverse = from_task.dependencies?.find(
+            (d) => d.id === to_task.id,
+        );
         if (reverse) {
             const reverse_type =
-                reverse.type || this.options.dependencies_type || 'finish-to-start';
+                reverse.type ||
+                this.options.dependencies_type ||
+                'finish-to-start';
             this.update_task(from_task.id, {
-                dependencies: from_task.dependencies.filter((d) => d.id !== to_task.id),
+                dependencies: from_task.dependencies.filter(
+                    (d) => d.id !== to_task.id,
+                ),
             });
             if (this.options.on_dependency_delete) {
-                this.options.on_dependency_delete(to_task, from_task, reverse_type);
+                this.options.on_dependency_delete(
+                    to_task,
+                    from_task,
+                    reverse_type,
+                );
             }
         }
 
@@ -2224,14 +2273,108 @@ export default class Gantt {
         }
     }
 
-    _cancel_linking() {
+    _svg_point(e) {
+        const pt = this.$svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const p = pt.matrixTransform(this.$svg.getScreenCTM().inverse());
+        return { x: p.x, y: p.y };
+    }
+
+    _connector_circle(bar, endpoint) {
+        const c =
+            endpoint === 'start' ? bar.$connector_start : bar.$connector_end;
+        return c || null;
+    }
+
+    // Resolve the linking drop/hover target from a pointer event. Returns
+    // { bar, endpoint } or null. A direct hit on a connector circle uses that
+    // circle's endpoint; a hit anywhere on a bar body picks the nearer
+    // endpoint by splitting the bar at its midpoint (RTL-aware).
+    _resolve_link_target(e, svgX) {
+        if (!this.linking_source_bar) return null;
+        const source_id = this.linking_source_bar.task.id;
+        const el = e.target;
+
+        if (el.classList && el.classList.contains('connector-circle')) {
+            const wrapper = $.closest('.bar-wrapper', el);
+            if (!wrapper) return null;
+            const bar_id = wrapper.getAttribute('data-id');
+            if (bar_id === source_id) return null;
+            const bar = this.get_bar(bar_id);
+            if (!bar) return null;
+            return { bar, endpoint: el.getAttribute('data-endpoint') };
+        }
+
+        const wrapper = $.closest('.bar-wrapper', el);
+        if (!wrapper) return null;
+        const bar_id = wrapper.getAttribute('data-id');
+        if (bar_id === source_id) return null;
+        const bar = this.get_bar(bar_id);
+        if (!bar) return null;
+
+        const x = svgX == null ? this._svg_point(e).x : svgX;
+        const midpoint = bar.$bar.getX() + bar.$bar.getWidth() / 2;
+        const near_start = this.options.isRTL ? x >= midpoint : x < midpoint;
+        return { bar, endpoint: near_start ? 'start' : 'end' };
+    }
+
+    _update_link_hover(target) {
+        const circle = target
+            ? this._connector_circle(target.bar, target.endpoint)
+            : null;
+        if (this.linking_hover_circle === circle) return;
+
+        this._clear_link_hover();
+        if (!circle) return;
+
+        circle.setAttribute('r', '9');
+        this.linking_hover_circle = circle;
         if (this.linking_temp_line) {
-            this.linking_temp_line.remove();
-            this.linking_temp_line = null;
+            this.linking_temp_line.classList.add('snap');
+        }
+
+        const type = this._resolve_dependency_type(
+            this.linking_source_endpoint,
+            target.endpoint,
+        );
+        const abbr =
+            {
+                'finish-to-start': 'FS',
+                'start-to-start': 'SS',
+                'finish-to-finish': 'FF',
+                'start-to-finish': 'SF',
+            }[type] || 'FS';
+        const cx = parseFloat(circle.getAttribute('cx'));
+        const cy = parseFloat(circle.getAttribute('cy'));
+        this.linking_snap_badge = createSVG('text', {
+            x: cx + 12,
+            y: cy - 10,
+            class: 'linking-snap-badge',
+            append_to: this.layers.linking,
+        });
+        this.linking_snap_badge.textContent = abbr;
+    }
+
+    _clear_link_hover() {
+        if (this.linking_hover_circle) {
+            this.linking_hover_circle.setAttribute('r', '4');
+            this.linking_hover_circle = null;
+        }
+        if (this.linking_temp_line) {
+            this.linking_temp_line.classList.remove('snap');
         }
         if (this.linking_snap_badge) {
             this.linking_snap_badge.remove();
             this.linking_snap_badge = null;
+        }
+    }
+
+    _cancel_linking() {
+        this._clear_link_hover();
+        if (this.linking_temp_line) {
+            this.linking_temp_line.remove();
+            this.linking_temp_line = null;
         }
         this.$svg
             .querySelectorAll('.connector-circle[r="9"]')
@@ -2286,7 +2429,12 @@ export default class Gantt {
         this.update_task(to_task.id, { dependencies: new_deps });
 
         if (this.options.on_dependency_changed) {
-            this.options.on_dependency_changed(from_task, to_task, old_type, new_type);
+            this.options.on_dependency_changed(
+                from_task,
+                to_task,
+                old_type,
+                new_type,
+            );
         }
     }
 
@@ -2360,7 +2508,10 @@ export default class Gantt {
         if (arrow) {
             arrow.activate();
             if (this.options.on_arrow_click) {
-                this.options.on_arrow_click(arrow.from_task.task, arrow.to_task.task);
+                this.options.on_arrow_click(
+                    arrow.from_task.task,
+                    arrow.to_task.task,
+                );
             }
         }
     }

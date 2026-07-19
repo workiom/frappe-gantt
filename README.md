@@ -82,7 +82,7 @@ Frappe Gantt offers a wide range of options to customize your chart.
 
 | **Option**               | **Description**                                               | **Possible Values**                                                                                                                                                           | **Default**                                         |
 | ------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| `allow_dependency_creation` | Enables interactive dependency creation by dragging between connector circles on task bars. When enabled, hovering a bar reveals circles at its start and end; drag from one circle to another to create a typed dependency. | `true`, `false` | `true` |
+| `allow_dependency_creation` | Enables interactive dependency creation by dragging between connector circles on task bars. When enabled, hovering a bar reveals circles at its start and end; drag from one circle and drop it on a target circle — or anywhere on a target bar, whose nearer half selects the endpoint — to create a typed dependency. | `true`, `false` | `true` |
 | `arrow_curve`            | Curve radius of arrows connecting dependencies.               | Any positive integer.                                                                                                                                                         | `5`                                                 |
 | `auto_move_label`        | Move task labels when user scrolls horizontally.              | `true`, `false`                                                                                                                                                               | `false`                                             |
 | `bar_corner_radius`      | Radius of the task bar corners (in pixels).                   | Any positive integer.                                                                                                                                                         | `3`                                                 |
@@ -291,7 +291,7 @@ let gantt = new Gantt("#gantt", tasks, {
 
 #### Interactive Dependency Linking
 
-When `allow_dependency_creation` is `true` (the default), hovering over any task bar reveals connector circles at its start (green) and end (orange). Drag from one circle to a circle on a different bar to create a dependency between them.
+When `allow_dependency_creation` is `true` (the default), hovering over any task bar reveals connector circles at its start (green) and end (orange). Drag from one circle and drop it on a different bar to create a dependency. You can drop precisely on a target circle, or anywhere on the target bar body — the bar is split at its midpoint, so dropping on its start half snaps to the start endpoint and dropping on its end half snaps to the end endpoint. The matching endpoint highlights while you hover, so you can see which relationship will be created before releasing.
 
 The dependency type is determined automatically by which circles are connected:
 
