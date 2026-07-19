@@ -186,24 +186,34 @@ export default class Gantt {
                         task._index = i;
                         // Skip date validation but continue to dependency/ID processing
                     } else {
-                        // Task has only one date - this is an error
-                        if (!task.start) {
-                            console.error(
-                                `task "${task.id}" doesn't have a start date`,
-                            );
-                            return false;
-                        }
-                        if (!task.end && !task.duration) {
-                            console.error(
-                                `task "${task.id}" doesn't have an end date`,
-                            );
-                            return false;
+                        // Task has exactly one of start/end. A start + duration
+                        // (no end) is still a full task — let it fall through to
+                        // the date-parsing block, which computes end from duration.
+                        const start_plus_duration =
+                            task.start && !task.end && task.duration;
+                        if (!start_plus_duration) {
+                            // start-only (no duration) or end-only → partial.
+                            // Surface it as a bar-less, clickable grid row instead
+                            // of dropping it; requires the task column.
+                            if (!this.options.task_column?.enabled) {
+                                console.warn(
+                                    `task "${task.id || task.name}" has only one date and will be hidden (task column is disabled)`,
+                                );
+                                return false;
+                            }
+                            task._has_partial_dates = true;
+                            // Dummy dates prevent errors downstream; the single
+                            // supplied date is discarded when the task is later
+                            // rescheduled via a date click.
+                            task._start = new Date();
+                            task._end = new Date();
+                            task._index = i;
                         }
                     }
                 }
 
-                // Only parse and validate dates if task has dates
-                if (!task._has_no_dates) {
+                // Only parse and validate dates for full-date tasks
+                if (!task._has_no_dates && !task._has_partial_dates) {
                     task._start = date_utils.parse(task.start);
                     if (task.end === undefined && task.duration !== undefined) {
                         task.end = task._start;
@@ -1088,8 +1098,9 @@ export default class Gantt {
     make_bars() {
         this.bars = this.tasks
             .map((task) => {
-                // Skip rendering bar for tasks without dates
-                if (task._has_no_dates) {
+                // Skip rendering a bar for tasks with no dates or only one date
+                // (a bar needs both a start and an end)
+                if (task._has_no_dates || task._has_partial_dates) {
                     return null;
                 }
                 const bar = new Bar(this, task);
@@ -1447,15 +1458,14 @@ export default class Gantt {
                         (svgP.y - this.config.header_height) / row_height,
                     );
 
-                    // Check if this row corresponds to a task without dates
                     const task = this.tasks[clicked_row_index];
-                    if (task && task._has_no_dates) {
+                    if (task) {
                         // Calculate which date was clicked
                         const x_in_units = svgP.x / this.config.column_width;
                         const units_from_start = Math.floor(
                             x_in_units * this.config.step,
                         );
-                        const clicked_date = date_utils.add(
+                        let clicked_date = date_utils.add(
                             this.gantt_start,
                             units_from_start,
                             this.config.unit,
@@ -1472,33 +1482,39 @@ export default class Gantt {
                             }
                         }
 
-                        // Set start date to clicked date and end date to 1 day after
-                        task._start = clicked_date;
-                        task._end = date_utils.add(clicked_date, 1, 'day');
-                        task.start = clicked_date;
-                        task.end = task._end;
+                        if (task._has_no_dates) {
+                            // No dates → assign immediately (start = clicked, end = +1 day)
+                            task._start = clicked_date;
+                            task._end = date_utils.add(clicked_date, 1, 'day');
+                            task.start = clicked_date;
+                            task.end = task._end;
 
-                        // Remove the _has_no_dates flag
-                        delete task._has_no_dates;
+                            // Remove the _has_no_dates flag
+                            delete task._has_no_dates;
 
-                        // Refresh the view to show the new bar (skipScroll = true to maintain current position)
-                        this.refresh(this.tasks, true);
+                            // Refresh the view to show the new bar (skipScroll = true)
+                            this.refresh(this.tasks, true);
 
-                        // Trigger date_change event
-                        this.trigger_event('date_change', [
-                            task,
-                            task._start,
-                            task._end,
-                        ]);
+                            this.trigger_event('date_change', [
+                                task,
+                                task._start,
+                                task._end,
+                            ]);
+                            this.trigger_event('after_date_change', [
+                                task,
+                                task._start,
+                                task._end,
+                            ]);
 
-                        // Trigger after_date_change event (for bar creation)
-                        this.trigger_event('after_date_change', [
-                            task,
-                            task._start,
-                            task._end,
-                        ]);
+                            return; // Don't unselect or hide popup for this case
+                        }
 
-                        return; // Don't unselect or hide popup for this case
+                        // Task already has date(s) → async-confirmed reschedule (opt-in).
+                        // No callback registered → fall through to normal unselect.
+                        if (this.options.on_date_change_request) {
+                            this.reschedule_task_from_click(task, clicked_date);
+                            return;
+                        }
                     }
                 }
 
@@ -1506,6 +1522,50 @@ export default class Gantt {
                 this.hide_popup();
             },
         );
+    }
+
+    async reschedule_task_from_click(task, clicked_date) {
+        // No-date tasks are assigned immediately in bind_grid_click, not here.
+        if (task._has_no_dates) return;
+        // Opt-in: date-having reschedule is inert without a callback.
+        if (!this.options.on_date_change_request) return;
+
+        const new_start = clicked_date;
+        let new_end;
+        if (task._has_partial_dates) {
+            // Exactly one date → treat like a fresh assignment (end = start + 1 day)
+            new_end = date_utils.add(new_start, 1, 'day');
+        } else {
+            // Both dates → preserve duration from the un-adjusted stored dates.
+            // setup_tasks re-adds the "last day = full day" +24h on refresh, so
+            // using the raw task.start/task.end (not the inflated _start/_end)
+            // keeps the rendered span stable across reschedules.
+            const start_ms = date_utils.parse(task.start).getTime();
+            const end_ms = date_utils.parse(task.end).getTime();
+            new_end = new Date(new_start.getTime() + (end_ms - start_ms));
+        }
+
+        let ok;
+        try {
+            ok = await this.options.on_date_change_request(
+                task,
+                new_start,
+                new_end,
+            );
+        } catch (e) {
+            return; // callback threw → leave task unchanged
+        }
+        if (!ok) return; // falsy → leave task unchanged
+
+        task._start = new_start;
+        task.start = new_start;
+        task._end = new_end;
+        task.end = new_end;
+        delete task._has_partial_dates;
+
+        this.refresh(this.tasks, true);
+        this.trigger_event('date_change', [task, new_start, new_end]);
+        this.trigger_event('after_date_change', [task, new_start, new_end]);
     }
 
     bind_holiday_labels() {

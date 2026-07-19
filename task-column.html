@@ -217,6 +217,22 @@
                 progress: 60,
             },
             {
+                // Partial date (start only) — renders as a bar-less, clickable row.
+                // Click a date: on_date_change_request fires; on true, end = start + 1 day.
+                start: daysSince(1),
+                name: 'Vendor selection (start only)',
+                id: 'Task 7a',
+                progress: 0,
+            },
+            {
+                // Partial date (end only) — renders as a bar-less, clickable row.
+                // Click a date: on_date_change_request fires; on true, end = start + 1 day.
+                end: daysSince(8),
+                name: 'Compliance sign-off (end only)',
+                id: 'Task 7b',
+                progress: 0,
+            },
+            {
                 start: daysSince(11),
                 end: daysSince(14),
                 name: 'Final client review',
@@ -320,6 +336,17 @@
             },
             on_task_after_column_resize: (newWidth) => {
                 alert(`Task column resized to: ${newWidth}px`);
+            },
+            // Demo of the opt-in async date-click reschedule confirmation.
+            // Fires when a date is clicked on a task that already has date(s):
+            // partial-date tasks (Task 7a/7b) and full-date bars. Return true to
+            // apply new_start/new_end, false to leave the task unchanged.
+            on_date_change_request: async (task, new_start, new_end) => {
+                return confirm(
+                    `Reschedule "${task.name}"?\n` +
+                        `Start: ${new_start.toLocaleDateString()}\n` +
+                        `End:   ${new_end.toLocaleDateString()}`,
+                );
             },
         });
 

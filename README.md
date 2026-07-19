@@ -248,6 +248,16 @@ The function receives one object as an argument, containing:
 -   `set_title`, `set_subtitle`, `set_details` (functions) - take in the HTML of the relevant section
 -   `add_action` (function) - accepts two parameters, `html` and `func` - respectively determining the HTML of the action and the callback when the action is pressed.
 
+#### Click to Assign / Reschedule Dates
+
+When `task_column.enabled` is true, clicking a date cell in a task's row sets its dates:
+
+- **No dates:** assigns immediately — start = clicked date, end = one day later. No confirmation.
+- **One date (start-only or end-only):** such tasks now appear in the task column with no bar. If an `on_date_change_request` callback is provided, clicking a date awaits it; on a truthy return, start = clicked date and end = one day later.
+- **Both dates:** if `on_date_change_request` is provided, clicking a date awaits it; on a truthy return, start = clicked date and the **original duration is preserved** (e.g. a 3-day task stays 3 days).
+
+`on_date_change_request(task, new_start, new_end)` may be async. Without it, clicking a date on a task that already has dates does nothing (opt-in). Falsy return, a thrown error, or no callback all leave the task unchanged.
+
 ### Events
 
 Frappe Gantt provides event callbacks to respond to user interactions:
@@ -266,6 +276,7 @@ Frappe Gantt provides event callbacks to respond to user interactions:
 | `on_dependency_create` | Triggered when a new dependency is created via interactive linking (no prior connection between the two tasks). | `from_task`, `to_task`, `type` — the dependency type string (e.g. `'finish-to-start'`) |
 | `on_dependency_changed` | Triggered when an existing dependency between two tasks is replaced with a different type. | `from_task`, `to_task`, `old_type`, `new_type` |
 | `on_dependency_delete` | Triggered when a dependency is removed — either by pressing Delete/Backspace while an arrow is active, or by re-connecting the same two tasks with the same type (toggle off). | `from_task`, `to_task`, `type` |
+| `on_date_change_request` | Async confirmation before a **date click** reschedules a task that already has a start and/or end date (task column enabled). Return truthy to apply the proposed dates, falsy to leave the task unchanged. If it throws or is absent, the task is unchanged. No-date tasks are unaffected (they assign immediately). | `task`, `new_start` (Date), `new_end` (Date) |
 
 #### Arrow Active State
 
